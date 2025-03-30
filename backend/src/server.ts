@@ -1,16 +1,22 @@
 import express from "express";
 import { initializeDatabase } from "./database";
-import { errorHandler } from "./middleware/errorHandler";
 import createOrder from "./routes/create_order";
 import removeOrder from "./routes/remove_order";
+import orders from "./routes/orders";
+const axios = require('axios');
 
-const PORT: number = 3000;
+const PORT: number = 3001;
+export const MAX_TABLE_TIME = 120 * 60 * 1000 // 2 hours In mils
+const MAX_TABLE_DELAY = 20 * 60 * 1000 // 20 minutes In mils
+
+const cors = require('cors');
 const app = express();
 
+app.use(cors());
 app.use(express.json());
 app.use("/orders/create", createOrder);
 app.use("/orders/remove", removeOrder);
-app.use(errorHandler);
+app.use("/orders/get", orders);
 
 const startServer = async () => {
     try {
@@ -39,3 +45,14 @@ process.on('SIGINT', () => {
 });
 
 startServer();
+
+const getTodayOrdersRequest = async () => {
+    try {
+      const response = await axios.get('http://localhost:3001/orders/get?today=true');
+      console.log('Request success:', response.data);
+    } catch (error) {
+      console.error('Request failed:', error);
+    }
+};
+
+setInterval(getTodayOrdersRequest, 1 * 60 * 1000); // 1 minute in mils

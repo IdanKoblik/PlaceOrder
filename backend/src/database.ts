@@ -24,6 +24,8 @@ export const initializeDatabase = (): Promise<void> => {
                         customer_id INTEGER,
                         table_num INTEGER,
                         time TEXT NOT NULL,
+                        note TEXT NOT NULL,
+                        active INTEGER,
                         FOREIGN KEY (customer_id) REFERENCES customers(id)
                     )
                 `, (err) => {

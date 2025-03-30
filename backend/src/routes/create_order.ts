@@ -1,7 +1,8 @@
 import express, { Request, Response } from 'express';
 import { getDatabase } from "../database";
-import { CreateOrderRequest } from '../modules/order';
+import { CreateOrderRequest, CreateEventRequest } from '../modules/order';
 import { checkExistingCustomer, checkTableAvailability} from "../utils/checks";
+import { createEvent } from '../services/calendar';
 
 const router = express.Router();
 const db = getDatabase();
@@ -13,7 +14,9 @@ router.post("/", (req: Request, res: Response): void => {
         phone_number, 
         guests, 
         table_num,
-        time
+        time,
+        note,
+        token
     } = createOrederRequest;
 
     if (!name || !guests || !table_num || !time || !phone_number) {
@@ -24,17 +27,35 @@ router.post("/", (req: Request, res: Response): void => {
         return;
     }
 
+    if (guests < 0) {
+        res.status(400).json({ 
+            error: "Number of guests cannot be less then 0" 
+        });
+
+        return;
+    }
+
+    if (table_num < 0) {
+        res.status(400).json({ 
+            error: "Table number cannot be less then 0" 
+        });
+
+        return;
+    }
+
     Promise.all([
         checkExistingCustomer(createOrederRequest, db),
         checkTableAvailability(createOrederRequest, db)
     ]).then(([customerExists, tableBooked]) => {
         if (customerExists) {
+            console.log("You have already made a reservation for this time.");
             return res.status(400).json({
                 error: "You have already made a reservation for this time."
             });
         }
 
         if (tableBooked) {
+            console.log("This table is already booked for the specified time.");
             return res.status(400).json({
                 error: "This table is already booked for the specified time."
             });
@@ -53,9 +74,10 @@ router.post("/", (req: Request, res: Response): void => {
                 
                 const customer_id = this.lastID;
 
+                const is_active: number = new Date(time).getTime === Date.now ? 1 : 0;
                 db.run(
-                    "INSERT INTO orders (customer_id, table_num, time) VALUES (?, ?, ?)", 
-                    [customer_id, table_num, time], 
+                    "INSERT INTO orders (customer_id, table_num, time, note, active) VALUES (?, ?, ?, ?, ?)", 
+                    [customer_id, table_num, time, note, is_active], 
                     (err) => {
                         if (err) {
                             return res.status(500).json({ 
@@ -64,6 +86,18 @@ router.post("/", (req: Request, res: Response): void => {
                             });
                         }
                         
+                        const request: CreateEventRequest = {
+                            name: name,
+                            phone_number: phone_number,
+                            guests: guests,
+                            note: note,
+                            table_num: table_num,
+                            time: time,
+                            token: token,
+                            active: is_active
+                        };
+
+                        createEvent(request);
                         res.status(201).json({ 
                             customer_id,
                             order_id: this.lastID,
@@ -71,7 +105,8 @@ router.post("/", (req: Request, res: Response): void => {
                             phone_number, 
                             guests,
                             table_num,
-                            time
+                            time,
+                            note
                         });
                     }
                 );
