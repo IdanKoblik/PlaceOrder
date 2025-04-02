@@ -21,7 +21,7 @@ const PrivateRoute = ({ children }: { children: React.ReactNode }) => {
 
 function App() {
   return (
-    <GoogleOAuthProvider clientId={"66956533718-88e9o4hbtucuu1n68ggmvv8k77t1hinv.apps.googleusercontent.com"}>
+    <GoogleOAuthProvider clientId={"66956533718-rrfefep2vdjlvd5tn1j04sppcmf5gnp5.apps.googleusercontent.com"}>
       <Router>
         <Routes>
           <Route path="/login" element={<Login />} />

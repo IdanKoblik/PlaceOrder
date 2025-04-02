@@ -10,8 +10,11 @@
     "Note": "הערה",
     "Start Date & Time": "תאריך ושעת התחלה",
     "Cancel": "ביטול",
+    "Time": "זמן",
     "Calendar Dashboard": "לוח הזמנות",
     "Success": "ההזמנה נוצרה בהצלחה",
-    "Error scheduling": "שגיאה בתיאום ההזמנה ביומן גוגל"
+    "Error scheduling": "שגיאה בתיאום ההזמנה ביומן גוגל",
+    "Success removing": "ההזמנה נמחקה בהצלחה",
+    "Error removing order": "שגיאה במחיקת הזמנה"
   }
   

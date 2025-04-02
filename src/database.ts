@@ -9,6 +9,15 @@ export const initializeDatabase = (): Promise<void> => {
     return new Promise((resolve, reject) => {
         db.serialize(() => {
             db.run(`
+                CREATE TABLE IF NOT EXISTS config (
+                    key TEXT PRIMARY KEY NOT NULL,
+                    value TEXT NOT NULL
+                )
+                `,
+                (err) => { if (err) return reject(err); } 
+            );
+
+            db.run(`
                 CREATE TABLE IF NOT EXISTS customers (
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
                     name TEXT NOT NULL,
@@ -22,16 +31,25 @@ export const initializeDatabase = (): Promise<void> => {
                     CREATE TABLE IF NOT EXISTS orders (
                         id INTEGER PRIMARY KEY AUTOINCREMENT,
                         customer_id INTEGER,
+                        event_id TEXT,
                         table_num INTEGER,
                         time TEXT NOT NULL,
                         note TEXT NOT NULL,
+                        token TEXT NOT NULL,
                         active INTEGER,
-                        FOREIGN KEY (customer_id) REFERENCES customers(id)
+                        FOREIGN KEY (customer_id) REFERENCES customers(id),
+                        FOREIGN KEY (event_id) REFERENCES events(id)
                     )
                 `, (err) => {
                     if (err) return reject(err);
                     resolve();
                 });
+
+                db.run(`
+                    CREATE TABLE IF NOT EXISTS events (
+                        id TEXT PRIMARY KEY
+                    )
+                `);
             });
         });
     });

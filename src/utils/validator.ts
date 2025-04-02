@@ -1,6 +1,19 @@
 import {OrderRequest, CreateOrderRequest} from "../modules/order";
 import sqlite3, { Database } from "sqlite3";
 
+export const validateOrderRequest = (orderRequest: CreateOrderRequest): string | null => {
+    if (!orderRequest.name || !orderRequest.guests || !orderRequest.table_num || !orderRequest.time || !orderRequest.phone_number) 
+        return "Name, number of people, table number, phone number, and reservation time are required.";
+    
+    if (orderRequest.guests < 0)
+         return "Number of guests cannot be less than 0.";
+
+    if (orderRequest.table_num < 0)
+         return "Table number cannot be less than 0.";
+
+    return null;
+};
+
 export const checkExistingCustomer = (orderRequest: CreateOrderRequest, db: Database): Promise<boolean> => {
     return new Promise((resolve, reject) => {
         if (!orderRequest.phone_number) {

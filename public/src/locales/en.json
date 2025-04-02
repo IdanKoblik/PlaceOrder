@@ -8,10 +8,13 @@
     "Table number": "Table number",
     "Guest number": "Guest number",
     "Note": "Note",
+    "Time": "Time",
     "Start Date & Time": "Start Date & Time",
     "Cancel": "Cancel",
+    "Success removing": "Successfully removed an order.",
+    "Error removing order": "Error removing an order.",
     "Calendar Dashboard": "Calendar Dashboard",
     "Success": "Successfully created an order",
     "Error scheduling": "Error scheduling order in google calendar"
-  }
+}
   
