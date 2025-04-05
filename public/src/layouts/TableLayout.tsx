@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import Draggable from 'react-draggable';
-import { X, Plus, Trash2, Save, Hash, Beer } from 'lucide-react';
+import { X, Beer, Save } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import CreateOrderMenu from '../components/CreateOrderMenu';
+import TableOptionsPopup from '../components/TableOptionsMenu';
+import CreateTablePopup from '../components/CreateTableMenu';
 
 export interface Table {
   id: number;
@@ -10,6 +11,7 @@ export interface Table {
   y: number;
   number?: number;
   area: 'inside' | 'entrance' | 'outside';
+  shape: 'square' | 'circle';
 }
 
 interface TableLayoutProps {
@@ -22,8 +24,9 @@ const STORAGE_KEY = 'tableLayout';
 const TableLayout: React.FC<TableLayoutProps> = ({ onClose, isDarkMode }) => {
   const [layouts, setLayouts] = useState<{[key: string]: Table[]}>({ inside: [], entrance: [], outside: [] });
   const [selectedTable, setSelectedTable] = useState<Table | null>(null);
-  const [showModel, setShowModal] = useState(false);
+  const [showCreateTablePopup, setShowCreateTablePopup] = useState(false);
   const [selectedArea, setSelectedArea] = useState<'inside' | 'entrance' | 'outside'>('inside');
+  const [clickPosition, setClickPosition] = useState({ x: 0, y: 0 });
   const { t } = useTranslation();
 
   useEffect(() => {
@@ -34,25 +37,33 @@ const TableLayout: React.FC<TableLayoutProps> = ({ onClose, isDarkMode }) => {
     }
   }, []);
 
-  const handleAddTable = (e: React.MouseEvent<HTMLDivElement>) => {
+  const handleLayoutClick = (e: React.MouseEvent<HTMLDivElement>) => {
     const target = e.target as HTMLElement;
     if (target.classList.contains('layout-container')) {
       const rect = target.getBoundingClientRect();
-      const x = e.clientX - rect.left - 60;
-      const y = e.clientY - rect.top - 40;
-      
-      const newTable: Table = {
-        id: Date.now(),
-        x,
-        y,
-        area: selectedArea
-      };
-      
-      setLayouts(prev => ({
-        ...prev,
-        [selectedArea]: [...prev[selectedArea], newTable]
-      }));
+      setClickPosition({
+        x: e.clientX - rect.left - 60,
+        y: e.clientY - rect.top - 40
+      });
+      setShowCreateTablePopup(true);
     }
+  };
+
+  const handleCreateTable = (shape: 'square' | 'circle') => {
+    const newTable: Table = {
+      id: Date.now(),
+      x: clickPosition.x,
+      y: clickPosition.y,
+      area: selectedArea,
+      shape
+    };
+    
+    setLayouts(prev => ({
+      ...prev,
+      [selectedArea]: [...prev[selectedArea], newTable]
+    }));
+    
+    setShowCreateTablePopup(false);
   };
 
   const handleDragStop = (_e: any, data: any, tableId: number) => {
@@ -66,13 +77,12 @@ const TableLayout: React.FC<TableLayoutProps> = ({ onClose, isDarkMode }) => {
     }));
   };
 
-  const handleTableClick = (table: Table, e: React.MouseEvent) => {
+  const handleTableClick = (e: React.MouseEvent, table: Table) => {
     e.stopPropagation();
     setSelectedTable(selectedTable?.id === table.id ? null : table);
   };
 
-  const handleRemoveTable = (tableId: number, e: React.MouseEvent) => {
-    e.stopPropagation();
+  const handleRemoveTable = (tableId: number) => {
     setLayouts(prev => ({
       ...prev,
       [selectedArea]: prev[selectedArea].filter(table => table.id !== tableId)
@@ -80,19 +90,15 @@ const TableLayout: React.FC<TableLayoutProps> = ({ onClose, isDarkMode }) => {
     setSelectedTable(null);
   };
 
-  const handleCreateReservation = (e: React.MouseEvent, tableNumber?: number) => {
-    e.stopPropagation();
+  const handleCreateReservation = (tableNumber?: number) => {
     if (!tableNumber) {
-      alert(t("Null table"));
+      alert(t("Please set a table number first"));
       return;
     }
-
     setShowModal(true);
   };
 
-  const handleSetTableNumber = (tableId: number, e: React.MouseEvent) => {
-    e.stopPropagation();
-  
+  const handleSetTableNumber = (tableId: number) => {  
     const number = prompt(t('Enter table number:'));
     
     if (number !== null) {
@@ -188,7 +194,7 @@ const TableLayout: React.FC<TableLayoutProps> = ({ onClose, isDarkMode }) => {
             className={`layout-container w-full h-[60vh] border-2 ${
               isDarkMode ? 'border-gray-600 bg-gray-900' : 'border-gray-300 bg-gray-50'
             } rounded-lg relative overflow-hidden`}
-            onClick={handleAddTable}
+            onClick={handleLayoutClick}
           >
             {/* Fixed Areas */}
             {selectedArea === 'inside' && (
@@ -209,8 +215,10 @@ const TableLayout: React.FC<TableLayoutProps> = ({ onClose, isDarkMode }) => {
               >
                 <div className="absolute">
                   <div
-                    onClick={(e) => handleTableClick(table, e)}
-                    className={`cursor-move select-none w-32 h-15 rounded-lg flex items-center justify-center font-bold text-xl ${
+                    onClick={(e) => handleTableClick(e, table)}
+                    className={`cursor-move select-none w-32 h-20 ${
+                      table.shape === 'circle' ? 'rounded-full' : 'rounded-lg'
+                    } flex items-center justify-center font-bold text-xl ${
                       isDarkMode
                         ? 'bg-blue-600 text-white hover:bg-blue-700'
                         : 'bg-blue-500 text-white hover:bg-blue-600'
@@ -220,60 +228,27 @@ const TableLayout: React.FC<TableLayoutProps> = ({ onClose, isDarkMode }) => {
                   >
                     {table.number || '?'}
                   </div>
-                  
-                  {selectedTable?.id === table.id && (
-                    <div className={`fixed mt-2 left-1/2 transform -translate-x-1/2 ${
-                      isDarkMode ? 'bg-gray-700' : 'bg-white'
-                    } rounded-lg shadow-lg p-2 min-w-[160px] z-[9999]`}>
-                      <button
-                        onClick={(e) => handleCreateReservation(e, selectedTable.number)}
-                        className={`w-full mb-2 px-4 py-2 rounded flex items-center ${
-                          isDarkMode
-                            ? 'bg-blue-600 hover:bg-blue-700 text-white'
-                            : 'bg-blue-500 hover:bg-blue-600 text-white'
-                        }`}
-                      >
-                        <Plus className="w-4 h-4 mr-2" />
-                        {t('Create Reservation')}
-                      </button>
-                      <button
-                        onClick={(e) => handleSetTableNumber(table.id, e)}
-                        className={`w-full mb-2 px-4 py-2 rounded flex items-center ${
-                          isDarkMode
-                            ? 'bg-purple-600 hover:bg-purple-700 text-white'
-                            : 'bg-purple-500 hover:bg-purple-600 text-white'
-                        }`}
-                      >
-                        <Hash className="w-4 h-4 mr-2" />
-                        {t('Set Table Number')}
-                      </button>
-                      <button
-                        onClick={(e) => handleRemoveTable(table.id, e)}
-                        className={`w-full px-4 py-2 rounded flex items-center ${
-                          isDarkMode
-                            ? 'bg-red-600 hover:bg-red-700 text-white'
-                            : 'bg-red-500 hover:bg-red-600 text-white'
-                        }`}
-                      >
-                        <Trash2 className="w-4 h-4 mr-2" />
-                        {t('Remove Table')}
-                      </button>
-                    </div>
-                  )}
                 </div>
               </Draggable>
             ))}
           </div>
-          
-          {showModel && (
-              <div>
-                <CreateOrderMenu
-                  setSelectedTable={(table) => setSelectedTable(table)}
-                  tableNumber={selectedTable?.number}
-                  isDarkMode = {isDarkMode}
-                  setShowModal={(show) => setShowModal(show)}
-                />
-              </div>
+
+          {selectedTable && (
+            <TableOptionsPopup
+              table={selectedTable}
+              isDarkMode={isDarkMode}
+              onSetTableNumber={handleSetTableNumber}
+              onRemoveTable={handleRemoveTable}
+              onClose={() => setSelectedTable(null)}
+            />
+          )}
+
+          {showCreateTablePopup && (
+            <CreateTablePopup
+              isDarkMode={isDarkMode}
+              onCreateTable={handleCreateTable}
+              onClose={() => setShowCreateTablePopup(false)}
+            />
           )}
 
           <p className={`mt-4 text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>

@@ -170,7 +170,6 @@ const Dashboard: React.FC = () => {
         {showModal && (
           <div>
             <CreateOrderMenu
-              setSelectedTable={() => null}
               isDarkMode = {isDarkMode}
               setShowModal={(show) => setShowModal(show)}
             />

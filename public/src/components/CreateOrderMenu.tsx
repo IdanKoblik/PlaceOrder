@@ -1,16 +1,14 @@
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { CreateEventRequest } from '../../../src/modules/order';
-import { Table } from '../layouts/TableLayout';
 
 interface CreateOrderMenuProps {
   tableNumber?: number;
   isDarkMode: boolean;
   setShowModal: (show: boolean) => void;
-  setSelectedTable: (table: Table | null) => void;
 }
 
-const CreateOrderMenu: React.FC<CreateOrderMenuProps> = ({ tableNumber, isDarkMode, setShowModal, setSelectedTable }) => {
+const CreateOrderMenu: React.FC<CreateOrderMenuProps> = ({ tableNumber, isDarkMode, setShowModal }) => {
   const { t } = useTranslation();
   const [eventForm, setEventForm] = useState<CreateEventRequest>({
     token: '',
@@ -70,10 +68,8 @@ const CreateOrderMenu: React.FC<CreateOrderMenuProps> = ({ tableNumber, isDarkMo
         active: 0
       });
       alert('Event created successfully!');
-      setSelectedTable(null);
     } catch (error) {
       console.error('Error creating event:', error);
-      setSelectedTable(null);
       alert('Failed to create event. Please try again.');
     }
   };
