@@ -21,7 +21,7 @@ export const initializeDatabase = (): Promise<void> => {
                 CREATE TABLE IF NOT EXISTS customers (
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
                     name TEXT NOT NULL,
-                    phone_number TEXT NOT NULL,
+                    phoneNumber TEXT NOT NULL,
                     guests INTEGER NOT NULL
                 )
             `, (err) => {
@@ -30,15 +30,15 @@ export const initializeDatabase = (): Promise<void> => {
                 db.run(`
                     CREATE TABLE IF NOT EXISTS orders (
                         id INTEGER PRIMARY KEY AUTOINCREMENT,
-                        customer_id INTEGER,
-                        event_id TEXT,
-                        table_num INTEGER,
+                        customerId INTEGER,
+                        eventId TEXT,
+                        tableNumber INTEGER,
                         time TEXT NOT NULL,
                         note TEXT NOT NULL,
-                        token TEXT NOT NULL,
-                        active INTEGER,
-                        FOREIGN KEY (customer_id) REFERENCES customers(id),
-                        FOREIGN KEY (event_id) REFERENCES events(id)
+                        googleToken TEXT NOT NULL,
+                        status INTEGER,
+                        FOREIGN KEY (customerId) REFERENCES customers(id),
+                        FOREIGN KEY (eventId) REFERENCES events(id)
                     )
                 `, (err) => {
                     if (err) return reject(err);

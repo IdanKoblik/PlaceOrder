@@ -77,8 +77,7 @@ const TableLayout: React.FC<TableLayoutProps> = ({ onClose, isDarkMode }) => {
     }));
   };
 
-  const handleTableClick = (e: React.MouseEvent, table: Table) => {
-    e.stopPropagation();
+  const handleTableClick = (table: Table) => {
     setSelectedTable(selectedTable?.id === table.id ? null : table);
   };
 
@@ -88,14 +87,6 @@ const TableLayout: React.FC<TableLayoutProps> = ({ onClose, isDarkMode }) => {
       [selectedArea]: prev[selectedArea].filter(table => table.id !== tableId)
     }));
     setSelectedTable(null);
-  };
-
-  const handleCreateReservation = (tableNumber?: number) => {
-    if (!tableNumber) {
-      alert(t("Please set a table number first"));
-      return;
-    }
-    setShowModal(true);
   };
 
   const handleSetTableNumber = (tableId: number) => {  
@@ -215,7 +206,8 @@ const TableLayout: React.FC<TableLayoutProps> = ({ onClose, isDarkMode }) => {
               >
                 <div className="absolute">
                   <div
-                    onClick={(e) => handleTableClick(e, table)}
+                    onClick={() => handleTableClick(table)}
+                    onTouchEnd={() => handleTableClick(table)}
                     className={`cursor-move select-none w-32 h-20 ${
                       table.shape === 'circle' ? 'rounded-full' : 'rounded-lg'
                     } flex items-center justify-center font-bold text-xl ${

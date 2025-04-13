@@ -45,7 +45,6 @@ const TableOptionsMenu: React.FC<TableOptionsMenuProps> = ({
       return;
     }
 
-    alert(tableNumber);
     setShowModal(true);
   };
 

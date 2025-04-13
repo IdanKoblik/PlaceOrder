@@ -1,11 +1,11 @@
-import { CreateEventRequest, RemoveOrderRequest } from "../modules/order";
+import { CreateOrderRequest, RemoveOrderRequest } from "../modules/order";
 import { MAX_TABLE_TIME } from "../server";
 import { decryptToken } from "../utils/crypto";
 
-export const createEvent = async (request: CreateEventRequest): Promise<string> => {
+export const createEvent = async (request: CreateOrderRequest): Promise<string> => {
     const description = `
-    ${request.name} - ${request.phone_number}
-    🪑 ${request.table_num}
+    ${request.name} - ${request.phoneNumber}
+    🪑 ${request.tableNumber}
     👥 ${request.guests}
 
     ------
@@ -19,11 +19,11 @@ export const createEvent = async (request: CreateEventRequest): Promise<string> 
     const response = await fetch('https://www.googleapis.com/calendar/v3/calendars/primary/events', {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${request.token}`,
+        'Authorization': `Bearer ${request.googleToken}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        summary: `${request.name} - ${request.phone_number}`,
+        summary: `${request.name} - ${request.phoneNumber}`,
         description: description,
         start: {
           dateTime: start,
@@ -51,10 +51,10 @@ export const createEvent = async (request: CreateEventRequest): Promise<string> 
 
 export const removeEvent = async (request: RemoveOrderRequest) => {
     try {
-      const response = await fetch(`https://www.googleapis.com/calendar/v3/calendars/primary/events/${request.event_id}`, {
+      const response = await fetch(`https://www.googleapis.com/calendar/v3/calendars/primary/events/${request.eventId}`, {
         method: 'DELETE',
         headers: {
-            'Authorization': `Bearer ${decryptToken(request.token)}`,
+            'Authorization': `Bearer ${decryptToken(request.googleToken)}`,
         },
       });
 

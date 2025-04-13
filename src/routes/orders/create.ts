@@ -1,6 +1,6 @@
 import { Request, Response } from "express";
 import { getDatabase } from "../../database";
-import { CreateOrderRequest, CreateEventRequest } from "../../modules/order";
+import { CreateOrderRequest, CreateOrderResponse } from "../../modules/order";
 import { checkExistingCustomer, checkTableAvailability, validateOrderRequest } from "../../utils/validator";
 import { createEvent } from "../../services/calendar";
 import { encryptToken } from "../../utils/crypto";
@@ -9,17 +9,16 @@ const db = getDatabase();
 
 export const createOrder = async (req: Request, res: Response): Promise<void> => {
     try {
-        const createOrderRequest: CreateOrderRequest = req.body;
-
-        const error = validateOrderRequest(createOrderRequest);
+        const request: CreateOrderRequest = req.body;
+        const error = validateOrderRequest(request);
         if (error) {
             res.status(400).json({ error });
             return;
         }
 
         const [customerExists, tableBooked] = await Promise.all([
-            checkExistingCustomer(createOrderRequest, db),
-            checkTableAvailability(createOrderRequest, db)
+            checkExistingCustomer(request, db),
+            checkTableAvailability(request, db)
         ]);
 
         if (customerExists) {
@@ -34,8 +33,8 @@ export const createOrder = async (req: Request, res: Response): Promise<void> =>
 
         const customerId = await new Promise<number>((resolve, reject) => {
             db.run(
-                "INSERT INTO customers (name, phone_number, guests) VALUES (?, ?, ?)",
-                [createOrderRequest.name, createOrderRequest.phone_number, createOrderRequest.guests],
+                "INSERT INTO customers (name, phoneNumber, guests) VALUES (?, ?, ?)",
+                [request.name, request.phoneNumber, request.guests],
                 function (err) {
                     if (err) reject(err);
                     else resolve(this.lastID);
@@ -43,11 +42,10 @@ export const createOrder = async (req: Request, res: Response): Promise<void> =>
             );
         });
 
-        const is_active = 0;
         const orderId = await new Promise<number>((resolve, reject) => {
             db.run(
-                "INSERT INTO orders (customer_id, table_num, time, note, active, token) VALUES (?, ?, ?, ?, ?, ?)",
-                [customerId, createOrderRequest.table_num, createOrderRequest.time, createOrderRequest.note, is_active, encryptToken(createOrderRequest.token)],
+                "INSERT INTO orders (customerId, tableNumber, time, note, status, googleToken) VALUES (?, ?, ?, ?, ?, ?)",
+                [customerId, request.tableNumber, request.time, request.note, 0, encryptToken(request.googleToken)],
                 function (err) {
                     if (err) reject(err);
                     else resolve(this.lastID);
@@ -55,9 +53,7 @@ export const createOrder = async (req: Request, res: Response): Promise<void> =>
             );
         });
 
-        const request: CreateEventRequest = { ...createOrderRequest, active: is_active };
         const eventId = await createEvent(request);
-
         await new Promise<void>((resolve, reject) => {
             db.run(
                 "INSERT INTO events (id) VALUES (?);",
@@ -66,7 +62,7 @@ export const createOrder = async (req: Request, res: Response): Promise<void> =>
                     if (err) reject(err);
                     else {
                         db.run(
-                            "UPDATE orders SET event_id = ? WHERE id = ?;",
+                            "UPDATE orders SET eventId = ? WHERE id = ?;",
                             [eventId, orderId],
                             (err) => (err ? reject(err) : resolve())
                         );
@@ -75,8 +71,16 @@ export const createOrder = async (req: Request, res: Response): Promise<void> =>
             );
         });
 
-        res.status(201).json({ customer_id: customerId, order_id: orderId, ...createOrderRequest, eventId: eventId });
+        const response: CreateOrderResponse = {
+            name: request.name,
+            phoneNumber: request.phoneNumber,
+            tableNumber: request.tableNumber,
+            time: request.time,
+            guests: request.guests,
+            note: request.note,
+        };
 
+        res.status(201).json(response);
     } catch (error: any) {
         res.status(500).json({ error: error.message || "Unexpected error occurred.", details: error });
     }

@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { CreateEventRequest } from '../../../src/modules/order';
+import { CreateOrderRequest } from '../../../src/modules/order';
+import { API_URL } from '../App';
 
 interface CreateOrderMenuProps {
   tableNumber?: number;
@@ -10,68 +11,44 @@ interface CreateOrderMenuProps {
 
 const CreateOrderMenu: React.FC<CreateOrderMenuProps> = ({ tableNumber, isDarkMode, setShowModal }) => {
   const { t } = useTranslation();
-  const [eventForm, setEventForm] = useState<CreateEventRequest>({
-    token: '',
+  const [eventForm, setEventForm] = useState<CreateOrderRequest>({
+    googleToken: '',
     name: '',
     note: '',
     time: '',
-    phone_number: '',
+    phoneNumber: '',
     guests: 0,
-    table_num: tableNumber || 0,
-    active: 0
+    tableNumber: tableNumber || 0,
   });
-
-  const formatDateTime = (dateTimeString: string) => {
-    const date = new Date(dateTimeString);
-    return date.toISOString();
-  };
 
   const handleCreateEvent = async (e: React.FormEvent) => {
     e.preventDefault();
     const accessToken = localStorage.getItem('accessToken');
+    const response = await fetch(`${API_URL}/create`, {
+      method: "PUT",
+      body: JSON.stringify({ ...eventForm, googleToken: accessToken! }),
+      headers: {
+        'Content-Type': 'application/json',
+        Accept: 'application/json',
+      },
+    });
 
-    try {
-      const response = await fetch('https://www.googleapis.com/calendar/v3/calendars/primary/events', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${accessToken}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          summary: eventForm.name,
-          description: eventForm.note,
-          start: {
-            dateTime: formatDateTime(eventForm.time),
-            timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
-          },
-          end: {
-            dateTime: formatDateTime(eventForm.time),
-            timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
-          },
-        }),
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error?.message || 'Failed to create event');
-      }
-
-      setShowModal(false);
-      setEventForm({
-        token: '',
-        name: '',
-        note: '',
-        time: '',
-        phone_number: '',
-        guests: 0,
-        table_num: 0,
-        active: 0
-      });
-      alert('Event created successfully!');
-    } catch (error) {
-      console.error('Error creating event:', error);
-      alert('Failed to create event. Please try again.');
+    if (!response.ok) {
+      alert(t('Error scheduling'));
+      throw new Error(`Error! status: ${response.status}`);
     }
+
+    alert(t('Success'));
+    setShowModal(false);
+    setEventForm({
+      googleToken: '',
+      name: '',
+      note: '',
+      time: '',
+      phoneNumber: '',
+      guests: 0,
+      tableNumber: 0,
+    });
   };
 
   return (
@@ -119,8 +96,8 @@ const CreateOrderMenu: React.FC<CreateOrderMenuProps> = ({ tableNumber, isDarkMo
               </label>
               <input
                 type="tel"
-                value={eventForm.phone_number}
-                onChange={(e) => setEventForm({ ...eventForm, phone_number: e.target.value })}
+                value={eventForm.phoneNumber}
+                onChange={(e) => setEventForm({ ...eventForm, phoneNumber: e.target.value })}
                 className={`mt-1 block w-full rounded-md ${
                   isDarkMode
                     ? 'bg-gray-700 border-gray-600 text-white'
@@ -151,8 +128,8 @@ const CreateOrderMenu: React.FC<CreateOrderMenuProps> = ({ tableNumber, isDarkMo
               </label>
               <input
                 type="number"
-                value={eventForm.table_num}
-                onChange={(e) => setEventForm({ ...eventForm, table_num: parseInt(e.target.value) })}
+                value={eventForm.tableNumber}
+                onChange={(e) => setEventForm({ ...eventForm, tableNumber: parseInt(e.target.value) })}
                 className={`mt-1 block w-full rounded-md ${
                   isDarkMode
                     ? 'bg-gray-700 border-gray-600 text-white'

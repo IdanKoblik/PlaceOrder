@@ -4,21 +4,19 @@ import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import TableLayout from '../layouts/TableLayout';
 import '../i18n';
-import { CreateEventRequest, RemoveOrderRequest, UpdateActivityRequest } from '../../../src/modules/order';
+import { Order, OrderStatusRequest } from '../../../src/modules/order';
 import CreateOrderMenu from './CreateOrderMenu';
-import { table } from 'console';
+import { API_URL } from '../App';
 
 const Dashboard: React.FC = () => {
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();
   const [showModal, setShowModal] = useState(false);
   const [showTableLayout, setShowTableLayout] = useState(false);
+  const [reservations, setReservations] = useState<Order[]>([]);
   const [isDarkMode, setIsDarkMode] = useState(() => {
     return localStorage.getItem('darkMode') === 'true';
   });
-
-  const [reservations, setReservations] = useState<RemoveOrderRequest[]>([]);
-  const [availableTimes, setAvailableTimes] = useState<string[]>([]);
 
   useEffect(() => {
     fetchReservationsForToday();
@@ -40,15 +38,52 @@ const Dashboard: React.FC = () => {
   };
 
   const fetchReservationsForToday = async () => {
-    // TODO Implementation for fetching reservations
+    const response = await fetch(`${API_URL}/?today=true`, {
+      method: "GET"
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.error?.message || 'Failed to get reservations for today!');
+    }
+
+    setReservations(await response.json());
   };
 
   const removeReservation = async (index: number) => {
-    // TODO Implementation for removing reservation
+    const response = await fetch(`${API_URL}/delete`, {
+      method: "DELETE", 
+      body: JSON.stringify(reservations[index])
+    });
+
+    if (!response.ok) {
+      alert(t('Error remove'));
+      throw new Error(`Error! status: ${response.status}`);
+    }
+
+    fetchReservationsForToday();
   };
 
   const setActivity = async (index: number) => {
-    // TODO Implementation for setting activity
+    const request: OrderStatusRequest = {
+      orderId: reservations[index].orderId,
+      status: reservations[index].status === 1 ? 0 : 1
+    };
+
+    const response = await fetch(`${API_URL}/update/activity`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(request),
+    });
+
+    if (!response.ok) {
+      alert(t('Error update activity'));
+      throw new Error(`Error! status: ${response.status}`);
+    }
+    
+    fetchReservationsForToday();
   };
 
   return (
@@ -148,7 +183,7 @@ const Dashboard: React.FC = () => {
                     onClick={() => setActivity(index)} 
                     className="absolute top-12 right-2 p-1"
                   >
-                    {reservation.active === 1 ? (
+                    {reservation.status === 1 ? (
                       <span className="text-green-500">✅</span>
                     ) : (
                       <span className="text-red-500">❌</span>
@@ -156,8 +191,8 @@ const Dashboard: React.FC = () => {
                   </button>
 
                   <h3 className="text-lg font-semibold">{reservation.name}</h3>
-                  <p>{t('Phone number')}: {reservation.phone_number}</p>
-                  <p>{t('Table number')}: {reservation.table_num}</p>
+                  <p>{t('Phone number')}: {reservation.phoneNumber}</p>
+                  <p>{t('Table number')}: {reservation.tableNumber}</p>
                   <p>{t('Guest number')}: {reservation.guests}</p>
                   <p>{t('Note')}: {reservation.note}</p>
                   <p>{t('Time')}: {new Date(reservation.time).toLocaleString()}</p>

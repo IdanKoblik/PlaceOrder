@@ -1,32 +1,32 @@
 export interface OrderRequest {
-    table_num: number;
-    time: string;
-    token: string;
+    tableNumber: number,
+    phoneNumber: string,
+    time: string
 };
 
-export interface CreateOrderRequest extends OrderRequest {
-    name: string;
-    phone_number: string;
-    guests: number;
-    note: string;
+export interface AuthOrderRequest extends OrderRequest {
+    googleToken: string
 };
 
-export interface CreateEventRequest extends CreateOrderRequest { 
-    active: number;
+export interface CreateOrderRequest extends AuthOrderRequest {
+    name: string,
+    note?: string
+    guests: number
 };
 
-export interface OrderResponse extends CreateOrderRequest { 
-    active: number;
-    order_id: number;
+export interface UpdateOrderActivityRequest extends OrderRequest {
+    status: number
 };
 
-export interface RemoveOrderRequest extends OrderResponse {
-    event_id: string;
+export interface RemoveOrderRequest extends AuthOrderRequest {
+    eventId: string
 };
 
-export interface UpdateActivityRequest {
-    activity: number;
-    order_id: number;
+export interface OrderStatusRequest {
+    orderId: number,
+    status: number
 }
 
-export type OrdersResponse = RemoveOrderRequest;
+export interface Order extends CreateOrderRequest, UpdateOrderActivityRequest, RemoveOrderRequest, OrderStatusRequest {};
+
+export type CreateOrderResponse = Omit<CreateOrderRequest, 'googleToken'>;

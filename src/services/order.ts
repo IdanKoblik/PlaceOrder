@@ -4,26 +4,26 @@ import { RemoveOrderRequest } from "../modules/order";
 const db = getDatabase();
 
 export const removeOrder = async (removeOrderRequest: RemoveOrderRequest): Promise<void> => {
-    const { table_num, time } = removeOrderRequest;
+    const { tableNumber, time } = removeOrderRequest;
 
     await runQuery(
         `DELETE FROM customers WHERE id IN (
-            SELECT customer_id FROM orders WHERE table_num = ? AND time = ?
+            SELECT customerId FROM orders WHERE tableNumber = ? AND time = ?
         ) AND id NOT IN (
-            SELECT customer_id FROM orders WHERE customer_id = customers.id 
-            AND (table_num != ? OR time != ?)
+            SELECT customerId FROM orders WHERE customerId = customers.id 
+            AND (tableNumber != ? OR time != ?)
         );`,
-        [table_num, time, table_num, time]
+        [tableNumber, time, tableNumber, time]
     );
 
     await runQuery(
-        `DELETE FROM orders WHERE table_num = ? AND time = ?;`,
-        [table_num, time]
+        `DELETE FROM orders WHERE tableNumber = ? AND time = ?;`,
+        [tableNumber, time]
     );
 
     await runQuery(
         `DELETE FROM events WHERE id NOT IN (
-            SELECT event_id FROM orders WHERE event_id IS NOT NULL
+            SELECT eventId FROM orders WHERE eventId IS NOT NULL
         );`
     );
 };
@@ -38,4 +38,5 @@ export const runQuery = (query: string, params: any[] = []) =>
                 resolve();
             }
         });
-    });
+    }
+);
