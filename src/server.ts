@@ -1,6 +1,6 @@
 import express from "express";
 import { initializeDatabase } from "./database";
-import orders from "./routes/orders";
+import api from "./routes/index";
 import { config } from "./modules/config";
 
 const PORT: number = 3001;
@@ -12,9 +12,7 @@ const app = express();
 
 app.use(cors());
 app.use(express.json());
-app.use("/api/v1/orders", orders);
-
-export var SECRET: string;
+app.use("/api/v1/", api);
 
 const startServer = async () => {
     try {
@@ -24,27 +22,11 @@ const startServer = async () => {
             console.log(`Server is running on http://0.0.0.0:${PORT}`);
         });
 
-        SECRET = await getSecretKey();
     } catch (error) {
         console.error('Failed to start server:', error);
         process.exit(1);
     }
 };
-
-const getSecretKey = (): Promise<string> => {
-    return new Promise((resolve, reject) => {
-        const db = require('./database').getDatabase();
-
-        db.get("SELECT value FROM config WHERE key = 'secret';", (err: Error, row: config<string, string>) => {
-            if (err) {
-                reject(err.message);
-            } else {
-                resolve(row.value);
-            }
-        });
-    });
-};
-
 
 process.on('SIGINT', () => {
     const db = require('./database').getDatabase();

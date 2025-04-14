@@ -1,7 +1,7 @@
 import crypto from 'crypto';
+import config from "../../config.json";
 
-// TODO fix 
-const key = Buffer.from("f3fd76b4b8a93ee4aa7d9fd508f9523df7bd61e7624e8b43296a306f120b0596", 'utf-8').slice(0, 32); 
+const key = Buffer.from(config.secret, 'utf-8').slice(0, 32); 
 export const encryptToken = (token: string): string => {
     const iv = crypto.randomBytes(16);
 

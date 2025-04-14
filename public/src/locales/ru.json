@@ -14,7 +14,7 @@
     "Cancel": "Отмена",
     "Success": "Заказ успешно создан",
     "Error scheduling": "Ошибка при планировании заказа в Google Календаре",
-        "Success removing": "Заказ успешно удален.",
+    "Success removing": "Заказ успешно удален.",
     "Error removing order": "Ошибка при удалении заказа."
-  }
+}
   

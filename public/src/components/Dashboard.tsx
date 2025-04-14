@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Calendar, LogOut, Plus, Trash2, Layout, Moon, Sun } from 'lucide-react';
+import { Calendar, LogOut, Plus, Trash2, Layout, Moon, Sun, UnlockIcon, LockIcon } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import TableLayout from '../layouts/TableLayout';
@@ -7,6 +7,7 @@ import '../i18n';
 import { Order, OrderStatusRequest } from '../../../src/modules/order';
 import CreateOrderMenu from './CreateOrderMenu';
 import { API_URL } from '../App';
+import config from "../../../config.json";
 
 const Dashboard: React.FC = () => {
   const { t, i18n } = useTranslation();
@@ -14,6 +15,7 @@ const Dashboard: React.FC = () => {
   const [showModal, setShowModal] = useState(false);
   const [showTableLayout, setShowTableLayout] = useState(false);
   const [reservations, setReservations] = useState<Order[]>([]);
+  const [isLocked, setLocked] = useState<boolean>(true);
   const [isDarkMode, setIsDarkMode] = useState(() => {
     return localStorage.getItem('darkMode') === 'true';
   });
@@ -38,7 +40,7 @@ const Dashboard: React.FC = () => {
   };
 
   const fetchReservationsForToday = async () => {
-    const response = await fetch(`${API_URL}/?today=true`, {
+    const response = await fetch(`${API_URL}/orders/?today=true`, {
       method: "GET"
     });
 
@@ -50,8 +52,19 @@ const Dashboard: React.FC = () => {
     setReservations(await response.json());
   };
 
+  const lock = async (flag: boolean) => {
+    const password: string | null = prompt("Password");
+    if (!password)
+      return;
+
+    if (password !== config.lock_password)
+      return;
+
+    setLocked(!flag);
+  };
+
   const removeReservation = async (index: number) => {
-    const response = await fetch(`${API_URL}/delete`, {
+    const response = await fetch(`${API_URL}/orders/delete`, {
       method: "DELETE", 
       body: JSON.stringify(reservations[index])
     });
@@ -70,7 +83,7 @@ const Dashboard: React.FC = () => {
       status: reservations[index].status === 1 ? 0 : 1
     };
 
-    const response = await fetch(`${API_URL}/update/activity`, {
+    const response = await fetch(`${API_URL}/order/update/activity`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -98,6 +111,12 @@ const Dashboard: React.FC = () => {
               </h1>
             </div>
             <div className="flex items-center space-x-4">
+              <button
+                onClick={() => lock(isLocked)}
+                className={`p-2 rounded-lg ${isDarkMode ? 'bg-gray-700 text-yellow-300' : 'bg-gray-200 text-gray-600'} hover:opacity-80 transition-all`}
+              >
+                {isLocked ? <LockIcon size={20} /> : <UnlockIcon size={20} />}
+              </button>
               <button
                 onClick={toggleDarkMode}
                 className={`p-2 rounded-lg ${isDarkMode ? 'bg-gray-700 text-yellow-300' : 'bg-gray-200 text-gray-600'} hover:opacity-80 transition-all`}

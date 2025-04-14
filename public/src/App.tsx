@@ -4,6 +4,7 @@ import { GoogleOAuthProvider } from '@react-oauth/google';
 import Login from './components/Login';
 import Dashboard from './components/Dashboard';
 import { useAuth } from './hooks/useAuth';
+import config from "../../config.json";
 
 const PrivateRoute = ({ children }: { children: React.ReactNode }) => {
   const { isAuthenticated, isLoading } = useAuth();
@@ -19,11 +20,11 @@ const PrivateRoute = ({ children }: { children: React.ReactNode }) => {
   return isAuthenticated ? children : <Navigate to="/login" />;
 };
 
-export const API_URL: string = "http://0.0.0.0:3001/api/v1/orders";
+export const API_URL: string = "http://0.0.0.0:3001/api/v1";
 
 function App() {
   return (
-    <GoogleOAuthProvider clientId={"66956533718-rrfefep2vdjlvd5tn1j04sppcmf5gnp5.apps.googleusercontent.com"}>
+    <GoogleOAuthProvider clientId={config.client_id}>
       <Router>
         <Routes>
           <Route path="/login" element={<Login />} />
