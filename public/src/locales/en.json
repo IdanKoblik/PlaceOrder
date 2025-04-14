@@ -1,0 +1,17 @@
+{
+  "Save Layout": "Save Layout",
+  "Table Layout": "Table Layout",
+  "Inside": "Inside",
+  "Entrance": "Entrance",
+  "Outside": "Outside",
+  "Enter table number:": "Enter table number:",
+  "This table number is already taken. Please choose a different one.": "This table number is already taken. Please choose a different one.",
+  "Please enter a valid number.": "Please enter a valid number.",
+  "Layout saved successfully!": "Layout saved successfully!",
+  "Select an area and click anywhere on the layout to add a table. Click on a table to see options.": "Select an area and click anywhere on the layout to add a table. Click on a table to see options.",
+  "Table Options": "Table Options",
+  "Create Reservation": "Create Reservation",
+  "Set Table Number": "Set Table Number",
+  "Remove Table": "Remove Table",
+  "Please set a table number first": "Please set a table number first"
+}

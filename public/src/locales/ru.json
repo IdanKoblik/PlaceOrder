@@ -1,0 +1,20 @@
+{
+    "Welcome Back": "С возвращением",
+    "Sign in with Google v1": "Войти с помощью Google",
+    "Sign in with Google v2": "Войдите с помощью Google, чтобы управлять вашими событиями в календаре",
+    "Create Event": "Создать событие",
+    "Event Title": "Название события",
+    "Phone number": "Номер телефона",
+    "Table number": "Номер стола",
+    "Guest number": "Количество гостей",
+    "Note": "Заметка",
+    "Start Date & Time": "Дата и время начала",
+    "Time": "время",
+    "Calendar Dashboard": "Панель календаря",
+    "Cancel": "Отмена",
+    "Success": "Заказ успешно создан",
+    "Error scheduling": "Ошибка при планировании заказа в Google Календаре",
+    "Success removing": "Заказ успешно удален.",
+    "Error removing order": "Ошибка при удалении заказа."
+}
+  

@@ -1,4 +1,7 @@
+.idea/
 *.db
+
+config.json
 
 # Logs
 logs
