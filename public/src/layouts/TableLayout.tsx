@@ -5,6 +5,7 @@ import { useTranslation } from "react-i18next";
 import TableOptionsPopup from "../components/TableOptionsMenu";
 import CreateTablePopup from "../components/CreateTableMenu";
 import { API_URL } from "../App";
+import { fetchConfig } from "../components/Dashboard";
 
 export interface Table {
   id: number;
@@ -32,29 +33,33 @@ const TableLayout: React.FC<TableLayoutProps> = ({ onClose, isDarkMode }) => {
     "inside" | "entrance" | "outside"
   >("inside");
   const [clickPosition, setClickPosition] = useState({ x: 0, y: 0 });
+  const [isLocked, setLocked] = useState<boolean>(true);
   const { t } = useTranslation();
 
   useEffect(() => {
-    fetch(`${API_URL}/config/tables/layout`, {method: "GET"})
-      .then((res) => {
-        if (!res.ok) throw new Error("Failed to fetch layout");
-        return res.json();
-      })
-      .then((json) => {
-        const data = JSON.parse(json); 
+    (async () => {
+      const layoutData = await fetchConfig("layout");
+      if (layoutData) {
         setLayouts({
-          inside: data.inside || [],
-          entrance: data.entrance || [],
-          outside: data.outside || [],
+          inside: layoutData.inside || [],
+          entrance: layoutData.entrance || [],
+          outside: layoutData.outside || [],
         });
-      })
-      .catch((err) => {
-        console.error("Fetch layout error:", err);
-        alert(t("Failed to load layout."));
-      });
+      }
+  
+      const lockData = await fetchConfig("lock");
+      if (lockData) {
+        alert(lockData);
+        setLocked(lockData === "0");
+      }
+    })();
   }, []);
+  
 
   const handleLayoutClick = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (isLocked)
+      return;
+
     const target = e.target as HTMLElement;
     if (target.classList.contains("layout-container")) {
       const rect = target.getBoundingClientRect();
@@ -253,6 +258,7 @@ const TableLayout: React.FC<TableLayoutProps> = ({ onClose, isDarkMode }) => {
                 defaultPosition={{ x: table.x, y: table.y }}
                 onStop={(e, data) => handleDragStop(e, data, table.id)}
                 bounds="parent"
+                disabled={isLocked}
               >
                 <div className="absolute">
                   <div

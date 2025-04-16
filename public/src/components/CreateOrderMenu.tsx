@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { CreateOrderRequest } from '../../../src/modules/order';
 import { API_URL } from '../App';
+import { TimePicker } from './TimePicker';
 
 interface CreateOrderMenuProps {
   tableNumber?: number;
@@ -9,13 +10,24 @@ interface CreateOrderMenuProps {
   setShowModal: (show: boolean) => void;
 }
 
+const unavailableTimes = [
+  { hour: 12, minute: 0 }, // Lunch break
+  { hour: 12, minute: 15 },
+  { hour: 12, minute: 30 },
+  { hour: 12, minute: 45 },
+  { hour: 15, minute: 0 }, // Maintenance
+  { hour: 15, minute: 15 },
+  { hour: 15, minute: 30 },
+];
+
 const CreateOrderMenu: React.FC<CreateOrderMenuProps> = ({ tableNumber, isDarkMode, setShowModal }) => {
   const { t } = useTranslation();
+  const [showDatePicker, setShowDatePicker] = useState(false);
   const [eventForm, setEventForm] = useState<CreateOrderRequest>({
     googleToken: '',
     name: '',
     note: '',
-    time: '',
+    time: new Date().toISOString(),
     phoneNumber: '',
     guests: 0,
     tableNumber: tableNumber || 0,
@@ -24,7 +36,7 @@ const CreateOrderMenu: React.FC<CreateOrderMenuProps> = ({ tableNumber, isDarkMo
   const handleCreateEvent = async (e: React.FormEvent) => {
     e.preventDefault();
     const accessToken = localStorage.getItem('accessToken');
-    const response = await fetch(`${API_URL}/create`, {
+    const response = await fetch(`${API_URL}/orders/create`, {
       method: "PUT",
       body: JSON.stringify({ ...eventForm, googleToken: accessToken! }),
       headers: {
@@ -49,6 +61,14 @@ const CreateOrderMenu: React.FC<CreateOrderMenuProps> = ({ tableNumber, isDarkMo
       guests: 0,
       tableNumber: 0,
     });
+  };
+
+  const handleDateTimeChange = (date: Date) => {
+    setEventForm(prev => ({
+      ...prev,
+      time: date.toISOString()
+    }));
+    setShowDatePicker(false);
   };
 
   return (
@@ -138,23 +158,25 @@ const CreateOrderMenu: React.FC<CreateOrderMenuProps> = ({ tableNumber, isDarkMo
                 required
               />
             </div>
+
             <div>
               <label className={`block text-sm font-medium ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
                 {t('Date & Time')}
               </label>
-              <input
-                type="datetime-local"
-                value={eventForm.time}
-                onChange={(e) => setEventForm({ ...eventForm, time: e.target.value })}
-                className={`mt-1 block w-full rounded-md ${
+              <button
+                type="button"
+                onClick={() => setShowDatePicker(true)}
+                className={`mt-1 block w-full text-left px-3 py-2 rounded-md ${
                   isDarkMode
                     ? 'bg-gray-700 border-gray-600 text-white'
-                    : 'border-gray-300 text-gray-900'
+                    : 'border border-gray-300 text-gray-900'
                 } shadow-sm focus:border-blue-500 focus:ring-blue-500`}
-                required
-              />
+              >
+                {eventForm.time ? new Date(eventForm.time).toLocaleString() : t('Select Date & Time')}
+              </button>
             </div>
           </div>
+
           <div className="mt-6 flex justify-end space-x-3">
             <button
               type="button"
@@ -180,6 +202,40 @@ const CreateOrderMenu: React.FC<CreateOrderMenuProps> = ({ tableNumber, isDarkMo
           </div>
         </form>
       </div>
+
+      {showDatePicker && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+          <div className={`w-full h-full ${isDarkMode ? 'bg-gray-900' : 'bg-white'} p-4 flex flex-col`}>
+            <div className="flex justify-between items-center mb-4">
+              <h3 className={`text-xl font-semibold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+                {t('Select Date & Time')}
+              </h3>
+              <button
+                type="button"
+                onClick={() => setShowDatePicker(false)}
+                className={`p-2 rounded-md ${
+                  isDarkMode
+                    ? 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                }`}
+              >
+                {t('Cancel')}
+              </button>
+            </div>
+            <div className="flex-grow overflow-auto">
+              <TimePicker
+                value={new Date(eventForm.time)}
+                onChange={handleDateTimeChange}
+                minuteStep={15}
+                minTime={{ hour: 9, minute: 0 }}
+                maxTime={{ hour: 22, minute: 0 }}
+                unavailableTimes={unavailableTimes}
+                isDarkMode={isDarkMode}
+              />
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
