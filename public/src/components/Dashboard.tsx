@@ -8,6 +8,20 @@ import { Order, OrderStatusRequest } from '../../../src/modules/order';
 import CreateOrderMenu from './CreateOrderMenu';
 import { API_URL } from '../App';
 import config from "../../../config.json";
+import DatePicker from 'react-datepicker';
+
+export const fetchConfig = async (row: string) => {
+  try {
+    const res = await fetch(`${API_URL}/config?row=${row}`, { method: "GET" });
+    if (!res.ok) throw new Error(`Failed to fetch ${row}`);
+    const json = await res.json();
+    return JSON.parse(json);
+  } catch (err) {
+    console.error(`Fetch ${row} error:`, err);
+    alert("ERROR");
+    return null;
+  }
+};
 
 const Dashboard: React.FC = () => {
   const { t, i18n } = useTranslation();
@@ -24,6 +38,14 @@ const Dashboard: React.FC = () => {
     fetchReservationsForToday();
     document.documentElement.classList.toggle('dark', isDarkMode);
     localStorage.setItem('darkMode', isDarkMode.toString());
+
+    (async () => {
+      const lockData = await fetchConfig("lock");
+      if (lockData) {
+        alert(lockData);
+        setLocked(lockData === "0");
+      }
+    })();
   }, [isDarkMode]);
 
   const handleLogout = () => {
@@ -61,12 +83,30 @@ const Dashboard: React.FC = () => {
       return;
 
     setLocked(!flag);
+    
+    const response = await fetch(`${API_URL}/config/lock`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ value: (!flag === true ? 1 : 0) }),    
+    });
+
+    if (!response.ok) {
+      alert(t('Error locking'));
+      throw new Error(`Error! status: ${response.status}`);
+    }
   };
 
   const removeReservation = async (index: number) => {
+    const order: Order = reservations[index];
+
     const response = await fetch(`${API_URL}/orders/delete`, {
       method: "DELETE", 
-      body: JSON.stringify(reservations[index])
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({...order, googleToken: localStorage.getItem('accessToken')})
     });
 
     if (!response.ok) {
@@ -83,7 +123,7 @@ const Dashboard: React.FC = () => {
       status: reservations[index].status === 1 ? 0 : 1
     };
 
-    const response = await fetch(`${API_URL}/order/update/activity`, {
+    const response = await fetch(`${API_URL}/orders/update/activity`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
