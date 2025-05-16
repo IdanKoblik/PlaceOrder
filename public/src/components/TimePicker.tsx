@@ -21,8 +21,8 @@ export const TimePicker: React.FC<TimePickerProps> = ({
   value,
   onChange,
   minuteStep = 15,
-  minTime = { hour: 9, minute: 0 }, // Default 9 AM
-  maxTime = { hour: 22, minute: 0 }, // Default 10 PM
+  minTime = { hour: 9, minute: 0 },
+  maxTime = { hour: 22, minute: 0 },
   isDarkMode = false,
   tableNumber
 }) => {
@@ -31,53 +31,72 @@ export const TimePicker: React.FC<TimePickerProps> = ({
   );
   const [selectedHour, setSelectedHour] = useState<number>(value.getHours());
   const [selectedMinute, setSelectedMinute] = useState<number>(value.getMinutes());
-  const [unavailableTimes] = useState<TimeSlot[]>([]);
+  const [unavailableTimes, setUnavailableTimes] = useState<Set<string>>(new Set());
 
-  const fetchReservations = async () => {
-    const response = await fetch(`${API_URL}/orders/?tableNumber=${tableNumber}`, {
-      method: "GET"
-    });
+  const fetchReservations = async (date: string) => {
+    try {
+      const response = await fetch(`${API_URL}/orders/?tableNumber=${tableNumber}`, {
+        method: "GET"
+      });
 
-    if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(errorData.error?.message || 'Failed to get reservations for today!');
-    }
-
-    const reservations = await response.json();
-    reservations.forEach((reservation: Order) => {
-      const start = new Date(reservation.time);
-      console.log(`start: ${start.getHours()} : ${start.getMinutes()}`)
-
-      const prev = new Date(start.getTime() - 2 * 60 * 60 * 1000); // +2 hours
-
-      // rev
-      for (let time = new Date(prev); time < start; time.setMinutes(time.getMinutes() + minuteStep)) {
-        console.log(`${time.getHours()} : ${time.getMinutes()}`)
-        unavailableTimes.push({
-          hour: time.getHours(),
-          minute: time.getMinutes(),
-        });
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error?.message || 'Failed to get reservations');
       }
-    });
+
+      const reservations: Order[] = await response.json();
+      const blockedTimes = new Set<string>();
+
+      reservations.forEach((reservation: Order) => {
+        const reservationDate = new Date(reservation.time);
+        const reservationDateStr = reservationDate.toISOString().split('T')[0];
+        
+        // Only process reservations for the selected date
+        if (reservationDateStr === date) {
+          // Block 2 hours before and after the reservation
+          for (let i = -2; i <= 2; i++) {
+            const blockTime = new Date(reservationDate);
+            blockTime.setHours(blockTime.getHours() + i);
+            
+            // Block all time slots within each hour
+            for (let minute = 0; minute < 60; minute += minuteStep) {
+              const timeKey = `${blockTime.getHours()}-${minute}`;
+              blockedTimes.add(timeKey);
+            }
+          }
+        }
+      });
+
+      setUnavailableTimes(blockedTimes);
+    } catch (error) {
+      console.error('Error fetching reservations:', error);
+    }
   };
 
   useEffect(() => {
-    (async () => {
-      fetchReservations();
-    })();
-  }, []);
+    fetchReservations(selectedDate);
+  }, [selectedDate, tableNumber]);
 
   const generateTimeOptions = () => {
     const options: { hour: number; minute: number }[] = [];
+    const now = new Date();
+    const isToday = selectedDate === now.toISOString().split('T')[0];
     
     for (let hour = minTime.hour; hour <= maxTime.hour; hour++) {
       const startMinute = hour === minTime.hour ? minTime.minute : 0;
       const endMinute = hour === maxTime.hour ? maxTime.minute : 59;
       
       for (let minute = startMinute; minute <= endMinute; minute += minuteStep) {
-        if (!unavailableTimes.some(time => 
-          time.hour === hour && time.minute === minute
+        // Skip times in the past if it's today
+        if (isToday && (
+          hour < now.getHours() || 
+          (hour === now.getHours() && minute < now.getMinutes())
         )) {
+          continue;
+        }
+
+        const timeKey = `${hour}-${minute}`;
+        if (!unavailableTimes.has(timeKey)) {
           options.push({ hour, minute });
         }
       }
@@ -86,11 +105,10 @@ export const TimePicker: React.FC<TimePickerProps> = ({
     return options;
   };
 
-  const timeOptions = generateTimeOptions();
-
   const handleDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setSelectedDate(e.target.value);
-    updateDateTime(e.target.value, selectedHour, selectedMinute);
+    const newDate = e.target.value;
+    setSelectedDate(newDate);
+    updateDateTime(newDate, selectedHour, selectedMinute);
   };
 
   const handleTimeChange = (hour: number, minute: number) => {
@@ -137,7 +155,7 @@ export const TimePicker: React.FC<TimePickerProps> = ({
           Time
         </label>
         <div className="grid grid-cols-4 gap-2">
-          {timeOptions.map(({ hour, minute }) => (
+          {generateTimeOptions().map(({ hour, minute }) => (
             <button
               key={`${hour}-${minute}`}
               onClick={() => handleTimeChange(hour, minute)}
