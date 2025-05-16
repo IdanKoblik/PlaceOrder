@@ -20,7 +20,7 @@ interface TimePickerProps {
 export const TimePicker: React.FC<TimePickerProps> = ({
   value,
   onChange,
-  minuteStep = 15,
+  minuteStep = 120, // Changed to 2 hours (120 minutes)
   minTime = { hour: 9, minute: 0 },
   maxTime = { hour: 22, minute: 0 },
   isDarkMode = false,
@@ -51,18 +51,13 @@ export const TimePicker: React.FC<TimePickerProps> = ({
         const reservationDate = new Date(reservation.time);
         const reservationDateStr = reservationDate.toISOString().split('T')[0];
         
-        // Only process reservations for the selected date
         if (reservationDateStr === date) {
           // Block 2 hours before and after the reservation
           for (let i = -2; i <= 2; i++) {
             const blockTime = new Date(reservationDate);
             blockTime.setHours(blockTime.getHours() + i);
-            
-            // Block all time slots within each hour
-            for (let minute = 0; minute < 60; minute += minuteStep) {
-              const timeKey = `${blockTime.getHours()}-${minute}`;
-              blockedTimes.add(timeKey);
-            }
+            const timeKey = `${blockTime.getHours()}-${blockTime.getMinutes()}`;
+            blockedTimes.add(timeKey);
           }
         }
       });
@@ -78,27 +73,24 @@ export const TimePicker: React.FC<TimePickerProps> = ({
   }, [selectedDate, tableNumber]);
 
   const generateTimeOptions = () => {
-    const options: { hour: number; minute: number }[] = [];
+    const options: { startHour: number; startMinute: number; endHour: number; endMinute: number }[] = [];
     const now = new Date();
     const isToday = selectedDate === now.toISOString().split('T')[0];
     
-    for (let hour = minTime.hour; hour <= maxTime.hour; hour++) {
-      const startMinute = hour === minTime.hour ? minTime.minute : 0;
-      const endMinute = hour === maxTime.hour ? maxTime.minute : 59;
-      
-      for (let minute = startMinute; minute <= endMinute; minute += minuteStep) {
-        // Skip times in the past if it's today
-        if (isToday && (
-          hour < now.getHours() || 
-          (hour === now.getHours() && minute < now.getMinutes())
-        )) {
-          continue;
-        }
+    for (let hour = minTime.hour; hour <= maxTime.hour - 2; hour += 2) {
+      // Skip times in the past if it's today
+      if (isToday && hour < now.getHours()) {
+        continue;
+      }
 
-        const timeKey = `${hour}-${minute}`;
-        if (!unavailableTimes.has(timeKey)) {
-          options.push({ hour, minute });
-        }
+      const timeKey = `${hour}-0`;
+      if (!unavailableTimes.has(timeKey)) {
+        options.push({
+          startHour: hour,
+          startMinute: 0,
+          endHour: hour + 2,
+          endMinute: 0
+        });
       }
     }
     
@@ -111,10 +103,10 @@ export const TimePicker: React.FC<TimePickerProps> = ({
     updateDateTime(newDate, selectedHour, selectedMinute);
   };
 
-  const handleTimeChange = (hour: number, minute: number) => {
-    setSelectedHour(hour);
-    setSelectedMinute(minute);
-    updateDateTime(selectedDate, hour, minute);
+  const handleTimeChange = (startHour: number, startMinute: number) => {
+    setSelectedHour(startHour);
+    setSelectedMinute(startMinute);
+    updateDateTime(selectedDate, startHour, startMinute);
   };
 
   const updateDateTime = (date: string, hour: number, minute: number) => {
@@ -123,8 +115,10 @@ export const TimePicker: React.FC<TimePickerProps> = ({
     onChange(newDate);
   };
 
-  const formatTime = (hour: number, minute: number): string => {
-    return `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
+  const formatTimeRange = (startHour: number, startMinute: number, endHour: number, endMinute: number): string => {
+    const formatTime = (hour: number, minute: number) => 
+      `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
+    return `${formatTime(startHour, startMinute)}-${formatTime(endHour, endMinute)}`;
   };
 
   return (
@@ -152,22 +146,22 @@ export const TimePicker: React.FC<TimePickerProps> = ({
         <label className={`block text-sm font-medium ${
           isDarkMode ? 'text-gray-300' : 'text-gray-700'
         } mb-1`}>
-          Time
+          Time Slots (2 hours)
         </label>
-        <div className="grid grid-cols-4 gap-2">
-          {generateTimeOptions().map(({ hour, minute }) => (
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+          {generateTimeOptions().map(({ startHour, startMinute, endHour, endMinute }) => (
             <button
-              key={`${hour}-${minute}`}
-              onClick={() => handleTimeChange(hour, minute)}
+              key={`${startHour}-${startMinute}`}
+              onClick={() => handleTimeChange(startHour, startMinute)}
               className={`p-2 text-sm rounded-md transition-colors ${
-                selectedHour === hour && selectedMinute === minute
+                selectedHour === startHour && selectedMinute === startMinute
                   ? 'bg-blue-500 text-white'
                   : isDarkMode
                   ? 'bg-gray-700 text-gray-300 hover:bg-gray-600'
                   : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
               }`}
             >
-              {formatTime(hour, minute)}
+              {formatTimeRange(startHour, startMinute, endHour, endMinute)}
             </button>
           ))}
         </div>
