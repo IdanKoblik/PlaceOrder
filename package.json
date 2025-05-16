@@ -9,6 +9,8 @@
   },
   "dependencies": {
     "@googleapis/calendar": "^9.8.0",
+    "@mui/material": "^7.0.2",
+    "@mui/x-date-pickers": "^7.28.3",
     "@types/gapi": "^0.0.47",
     "assert": "^2.1.0",
     "axios": "^1.8.4",

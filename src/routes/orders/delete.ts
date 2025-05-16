@@ -10,8 +10,13 @@ const db = getDatabase();
 export const deleteOrder = async (req: Request, res: Response): Promise<void> => {
     try {
         const request: RemoveOrderRequest = req.body;
-        if (!request.tableNumber) {
+        if (!request.tableNumber || request.tableNumber < 0) {
             res.status(400).json({ error: "Table number is required." });
+            return;
+        }
+
+        if (!request.googleToken) {
+            res.status(400).json({ error: "Missing google auth token." });
             return;
         }
 
