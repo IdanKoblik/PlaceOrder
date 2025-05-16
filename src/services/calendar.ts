@@ -1,6 +1,5 @@
 import { CreateOrderRequest, RemoveOrderRequest } from "../modules/order";
 import { MAX_TABLE_TIME } from "../server";
-import { decryptToken } from "../utils/crypto";
 
 export const createEvent = async (request: CreateOrderRequest): Promise<string> => {
     const description = `
@@ -54,7 +53,7 @@ export const removeEvent = async (request: RemoveOrderRequest) => {
       const response = await fetch(`https://www.googleapis.com/calendar/v3/calendars/primary/events/${request.eventId}`, {
         method: 'DELETE',
         headers: {
-            'Authorization': `Bearer ${decryptToken(request.googleToken)}`,
+            'Authorization': `Bearer ${(request.googleToken)}`,
         },
       });
 

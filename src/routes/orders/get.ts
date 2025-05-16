@@ -9,12 +9,23 @@ const db = getDatabase();
 
 export const getOrders = async (req: Request, res: Response): Promise<void> => {
     const today: boolean = req.query.today === "true";
+    const tableNumber = req.query.tableNumber;
+    
+    let whereClause = "";
+    if (today && tableNumber) 
+        whereClause = `WHERE DATE(o.time) = DATE('now', 'localtime') AND o.tableNumber = ${Number(tableNumber)}`;
+    else if (today) 
+        whereClause = `WHERE DATE(o.time) = DATE('now', 'localtime')`;
+    else if (tableNumber) 
+        whereClause = `WHERE o.tableNumber = ${Number(tableNumber)}`;
+    
+
     const query = `
-        SELECT o.id AS orderId, o.tableNumber, o.time, o.note, o.status, o.googleToken, o.eventId,
-               c.id AS customerId, c.name, c.phoneNumber, c.guests
+        SELECT o.id AS orderId, o.tableNumber, o.time, o.note, o.status, o.eventId,
+            c.id AS customerId, c.name, c.phoneNumber, c.guests
         FROM orders o
         JOIN customers c ON o.customerId = c.id
-        ${today ? "WHERE DATE(o.time) = DATE('now', 'localtime')" : ""}
+        ${whereClause}
     `;
 
     try {

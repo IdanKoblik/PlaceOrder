@@ -35,7 +35,6 @@ export const initializeDatabase = (): Promise<void> => {
                         tableNumber INTEGER,
                         time TEXT NOT NULL,
                         note TEXT NOT NULL,
-                        googleToken TEXT NOT NULL,
                         status INTEGER,
                         FOREIGN KEY (customerId) REFERENCES customers(id),
                         FOREIGN KEY (eventId) REFERENCES events(id)

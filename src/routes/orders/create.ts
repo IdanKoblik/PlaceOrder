@@ -3,7 +3,6 @@ import { getDatabase } from "../../database";
 import { CreateOrderRequest, CreateOrderResponse } from "../../modules/order";
 import { checkExistingCustomer, checkTableAvailability, validateOrderRequest } from "../../utils/validator";
 import { createEvent } from "../../services/calendar";
-import { encryptToken } from "../../utils/crypto";
 
 const db = getDatabase();
 
@@ -44,8 +43,8 @@ export const createOrder = async (req: Request, res: Response): Promise<void> =>
 
         const orderId = await new Promise<number>((resolve, reject) => {
             db.run(
-                "INSERT INTO orders (customerId, tableNumber, time, note, status, googleToken) VALUES (?, ?, ?, ?, ?, ?)",
-                [customerId, request.tableNumber, request.time, request.note, 0, encryptToken(request.googleToken)],
+                "INSERT INTO orders (customerId, tableNumber, time, note, status) VALUES (?, ?, ?, ?, ?)",
+                [customerId, request.tableNumber, request.time, request.note, 0],
                 function (err) {
                     if (err) reject(err);
                     else resolve(this.lastID);
