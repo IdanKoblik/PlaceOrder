@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { CreateOrderRequest } from '../../../src/modules/order';
 import { API_URL } from '../App';
@@ -9,16 +9,6 @@ interface CreateOrderMenuProps {
   isDarkMode: boolean;
   setShowModal: (show: boolean) => void;
 }
-
-const unavailableTimes = [
-  { hour: 12, minute: 0 }, // Lunch break
-  { hour: 12, minute: 15 },
-  { hour: 12, minute: 30 },
-  { hour: 12, minute: 45 },
-  { hour: 15, minute: 0 }, // Maintenance
-  { hour: 15, minute: 15 },
-  { hour: 15, minute: 30 },
-];
 
 const CreateOrderMenu: React.FC<CreateOrderMenuProps> = ({ tableNumber, isDarkMode, setShowModal }) => {
   const { t } = useTranslation();
@@ -165,7 +155,14 @@ const CreateOrderMenu: React.FC<CreateOrderMenuProps> = ({ tableNumber, isDarkMo
               </label>
               <button
                 type="button"
-                onClick={() => setShowDatePicker(true)}
+                onClick={() => {
+                  if (!eventForm.tableNumber) {
+                    alert("table num req!");
+                    return;
+                  }
+                
+                  setShowDatePicker(true);
+                }}
                 className={`mt-1 block w-full text-left px-3 py-2 rounded-md ${
                   isDarkMode
                     ? 'bg-gray-700 border-gray-600 text-white'
@@ -229,8 +226,8 @@ const CreateOrderMenu: React.FC<CreateOrderMenuProps> = ({ tableNumber, isDarkMo
                 minuteStep={15}
                 minTime={{ hour: 9, minute: 0 }}
                 maxTime={{ hour: 22, minute: 0 }}
-                unavailableTimes={unavailableTimes}
                 isDarkMode={isDarkMode}
+                tableNumber={eventForm.tableNumber}
               />
             </div>
           </div>

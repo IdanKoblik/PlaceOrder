@@ -1,4 +1,6 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
+import { API_URL } from '../App';
+import { Order } from '../../../src/modules/order';
 
 interface TimeSlot {
   hour: number;
@@ -11,8 +13,8 @@ interface TimePickerProps {
   minuteStep?: number;
   minTime?: TimeSlot;
   maxTime?: TimeSlot;
-  unavailableTimes?: TimeSlot[];
   isDarkMode?: boolean;
+  tableNumber: number;
 }
 
 export const TimePicker: React.FC<TimePickerProps> = ({
@@ -21,14 +23,49 @@ export const TimePicker: React.FC<TimePickerProps> = ({
   minuteStep = 15,
   minTime = { hour: 9, minute: 0 }, // Default 9 AM
   maxTime = { hour: 22, minute: 0 }, // Default 10 PM
-  unavailableTimes = [],
   isDarkMode = false,
+  tableNumber
 }) => {
   const [selectedDate, setSelectedDate] = useState<string>(
     value.toISOString().split('T')[0]
   );
   const [selectedHour, setSelectedHour] = useState<number>(value.getHours());
   const [selectedMinute, setSelectedMinute] = useState<number>(value.getMinutes());
+  const [unavailableTimes] = useState<TimeSlot[]>([]);
+
+  const fetchReservations = async () => {
+    const response = await fetch(`${API_URL}/orders/?tableNumber=${tableNumber}`, {
+      method: "GET"
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.error?.message || 'Failed to get reservations for today!');
+    }
+
+    const reservations = await response.json();
+    reservations.forEach((reservation: Order) => {
+      const start = new Date(reservation.time);
+      console.log(`start: ${start.getHours()} : ${start.getMinutes()}`)
+
+      const prev = new Date(start.getTime() - 2 * 60 * 60 * 1000); // +2 hours
+
+      // rev
+      for (let time = new Date(prev); time < start; time.setMinutes(time.getMinutes() + minuteStep)) {
+        console.log(`${time.getHours()} : ${time.getMinutes()}`)
+        unavailableTimes.push({
+          hour: time.getHours(),
+          minute: time.getMinutes(),
+        });
+      }
+    });
+  };
+
+  useEffect(() => {
+    (async () => {
+      fetchReservations();
+    })();
+  }, []);
 
   const generateTimeOptions = () => {
     const options: { hour: number; minute: number }[] = [];
