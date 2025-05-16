@@ -20,7 +20,6 @@ interface TimePickerProps {
 export const TimePicker: React.FC<TimePickerProps> = ({
   value,
   onChange,
-  minuteStep = 120, // Changed to 2 hours (120 minutes)
   minTime = { hour: 9, minute: 0 },
   maxTime = { hour: 22, minute: 0 },
   isDarkMode = false,
@@ -31,7 +30,7 @@ export const TimePicker: React.FC<TimePickerProps> = ({
   );
   const [selectedHour, setSelectedHour] = useState<number>(value.getHours());
   const [selectedMinute, setSelectedMinute] = useState<number>(value.getMinutes());
-  const [unavailableTimes, setUnavailableTimes] = useState<Set<string>>(new Set());
+  const [reservedSlots, setReservedSlots] = useState<Set<string>>(new Set());
 
   const fetchReservations = async (date: string) => {
     try {
@@ -45,24 +44,19 @@ export const TimePicker: React.FC<TimePickerProps> = ({
       }
 
       const reservations: Order[] = await response.json();
-      const blockedTimes = new Set<string>();
+      const reserved = new Set<string>();
 
       reservations.forEach((reservation: Order) => {
         const reservationDate = new Date(reservation.time);
         const reservationDateStr = reservationDate.toISOString().split('T')[0];
         
         if (reservationDateStr === date) {
-          // Block 2 hours before and after the reservation
-          for (let i = -2; i <= 2; i++) {
-            const blockTime = new Date(reservationDate);
-            blockTime.setHours(blockTime.getHours() + i);
-            const timeKey = `${blockTime.getHours()}-${blockTime.getMinutes()}`;
-            blockedTimes.add(timeKey);
-          }
+          const timeKey = `${reservationDate.getHours()}-${reservationDate.getMinutes()}`;
+          reserved.add(timeKey);
         }
       });
 
-      setUnavailableTimes(blockedTimes);
+      setReservedSlots(reserved);
     } catch (error) {
       console.error('Error fetching reservations:', error);
     }
@@ -84,7 +78,7 @@ export const TimePicker: React.FC<TimePickerProps> = ({
       }
 
       const timeKey = `${hour}-0`;
-      if (!unavailableTimes.has(timeKey)) {
+      if (!reservedSlots.has(timeKey)) {
         options.push({
           startHour: hour,
           startMinute: 0,
