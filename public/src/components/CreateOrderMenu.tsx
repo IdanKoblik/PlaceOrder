@@ -223,7 +223,6 @@ const CreateOrderMenu: React.FC<CreateOrderMenuProps> = ({ tableNumber, isDarkMo
               <TimePicker
                 value={new Date(eventForm.time)}
                 onChange={handleDateTimeChange}
-                minuteStep={15}
                 minTime={{ hour: 9, minute: 0 }}
                 maxTime={{ hour: 22, minute: 0 }}
                 isDarkMode={isDarkMode}

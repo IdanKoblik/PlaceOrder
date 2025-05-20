@@ -10,7 +10,6 @@ interface TimeSlot {
 interface TimePickerProps {
   value: Date;
   onChange: (date: Date) => void;
-  minuteStep?: number;
   minTime?: TimeSlot;
   maxTime?: TimeSlot;
   isDarkMode?: boolean;
