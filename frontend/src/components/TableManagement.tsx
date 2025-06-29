@@ -1,5 +1,5 @@
 import React, { useState, useRef, useCallback } from 'react';
-import { Plus, Edit, Trash2, Save, X, Move, Settings, Download } from 'lucide-react';
+import { Plus, Edit, Trash2, Save, X, Move, Settings, Download, Upload } from 'lucide-react';
 import { useLanguage } from '../contexts/LanguageContext';
 import type { Table } from '../../../shared/types';
 
@@ -99,6 +99,35 @@ ${sqlStatements.join('\n')}`;
     jsonA.click();
     document.body.removeChild(jsonA);
     URL.revokeObjectURL(jsonUrl);
+  };
+
+  const handleLoadSampleTables = async () => {
+    if (confirm('This will load sample table data. Continue?')) {
+      const sampleTables: Table[] = [
+        // Bar Area - Adjustable chairs
+        { id: 'bar-1', name: 'Bar 1-2', area: 'bar', capacity: { min: 1, max: 2 }, isAdjustable: true, position: { x: 50, y: 20 }, isActive: true },
+        { id: 'bar-2', name: 'Bar 3-4', area: 'bar', capacity: { min: 1, max: 2 }, isAdjustable: true, position: { x: 150, y: 20 }, isActive: true },
+        { id: 'bar-3', name: 'Bar 5-6', area: 'bar', capacity: { min: 1, max: 2 }, isAdjustable: true, position: { x: 250, y: 20 }, isActive: true },
+        { id: 'bar-4', name: 'Bar 7-8', area: 'bar', capacity: { min: 1, max: 2 }, isAdjustable: true, position: { x: 350, y: 20 }, isActive: true },
+        
+        // Inside Dining - Flexible tables
+        { id: 'in-1', name: 'Table 1', area: 'inside', capacity: { min: 2, max: 4 }, isAdjustable: true, position: { x: 80, y: 80 }, isActive: true },
+        { id: 'in-2', name: 'Table 2', area: 'inside', capacity: { min: 2, max: 4 }, isAdjustable: true, position: { x: 200, y: 80 }, isActive: true },
+        { id: 'in-3', name: 'Table 3', area: 'inside', capacity: { min: 4, max: 6 }, isAdjustable: true, position: { x: 320, y: 80 }, isActive: true },
+        { id: 'in-4', name: 'Table 4', area: 'inside', capacity: { min: 2, max: 4 }, isAdjustable: true, position: { x: 80, y: 160 }, isActive: true },
+        { id: 'in-5', name: 'Table 5', area: 'inside', capacity: { min: 4, max: 8 }, isAdjustable: true, position: { x: 200, y: 160 }, isActive: true },
+        { id: 'in-6', name: 'Table 6', area: 'inside', capacity: { min: 2, max: 4 }, isAdjustable: true, position: { x: 320, y: 160 }, isActive: true },
+        
+        // Outside Patio - Fixed tables
+        { id: 'out-1', name: 'Patio 1', area: 'outside', capacity: { min: 2, max: 2 }, isAdjustable: false, position: { x: 60, y: 60 }, isActive: true },
+        { id: 'out-2', name: 'Patio 2', area: 'outside', capacity: { min: 4, max: 4 }, isAdjustable: false, position: { x: 180, y: 60 }, isActive: true },
+        { id: 'out-3', name: 'Patio 3', area: 'outside', capacity: { min: 2, max: 2 }, isAdjustable: false, position: { x: 300, y: 60 }, isActive: true },
+        { id: 'out-4', name: 'Patio 4', area: 'outside', capacity: { min: 6, max: 6 }, isAdjustable: false, position: { x: 120, y: 140 }, isActive: true },
+        { id: 'out-5', name: 'Patio 5', area: 'outside', capacity: { min: 4, max: 4 }, isAdjustable: false, position: { x: 240, y: 140 }, isActive: true },
+      ];
+      
+      await onUpdateTables(sampleTables);
+    }
   };
 
   const handleMouseDown = useCallback((e: React.MouseEvent, tableId: string) => {
@@ -201,9 +230,19 @@ ${sqlStatements.join('\n')}`;
       <div className="flex items-center justify-between">
         <h2 className="text-2xl font-bold text-gray-800">Table Management</h2>
         <div className="flex items-center gap-3">
+          {tables.length === 0 && (
+            <button
+              onClick={handleLoadSampleTables}
+              className="flex items-center gap-2 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
+            >
+              <Upload size={16} />
+              Load Sample Tables
+            </button>
+          )}
           <button
             onClick={handleExportTables}
-            className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+            disabled={tables.length === 0}
+            className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors"
           >
             <Download size={16} />
             Export Tables
@@ -242,7 +281,7 @@ ${sqlStatements.join('\n')}`;
             {t(`areas.${selectedArea}`)} Layout
           </h3>
           <div className="text-sm text-gray-600">
-            Drag tables to reposition them
+            {tables.length > 0 ? 'Drag tables to reposition them' : 'No tables configured'}
           </div>
         </div>
 
@@ -254,30 +293,40 @@ ${sqlStatements.join('\n')}`;
           onMouseUp={handleMouseUp}
           onMouseLeave={handleMouseUp}
         >
-          {currentAreaTables.map((table) => (
-            <div
-              key={table.id}
-              className={`absolute border-2 transition-all duration-200 flex items-center justify-center text-xs font-medium cursor-move
-                ${getTableShape(selectedArea)}
-                ${table.isActive 
-                  ? 'bg-blue-100 border-blue-500 hover:bg-blue-200' 
-                  : 'bg-gray-100 border-gray-400 opacity-60'
-                }
-                ${dragState.tableId === table.id ? 'scale-110 shadow-lg z-10' : 'hover:scale-105'}
-              `}
-              style={{
-                left: `${table.position.x}px`,
-                top: `${table.position.y}px`,
-              }}
-              onMouseDown={(e) => handleMouseDown(e, table.id)}
-              title={`${table.name} - Capacity: ${table.capacity.min}-${table.capacity.max}`}
-            >
-              <div className="text-center pointer-events-none">
-                <div className="font-semibold">{table.name.split(' ')[1] || table.name}</div>
-                <div className="text-xs opacity-75">{table.capacity.min}-{table.capacity.max}</div>
+          {currentAreaTables.length === 0 ? (
+            <div className="absolute inset-0 flex items-center justify-center text-gray-400">
+              <div className="text-center">
+                <Settings size={48} className="mx-auto mb-2 opacity-50" />
+                <p className="text-sm">No tables in this area</p>
+                <p className="text-xs">Click "Add Table" to get started</p>
               </div>
             </div>
-          ))}
+          ) : (
+            currentAreaTables.map((table) => (
+              <div
+                key={table.id}
+                className={`absolute border-2 transition-all duration-200 flex items-center justify-center text-xs font-medium cursor-move
+                  ${getTableShape(selectedArea)}
+                  ${table.isActive 
+                    ? 'bg-blue-100 border-blue-500 hover:bg-blue-200' 
+                    : 'bg-gray-100 border-gray-400 opacity-60'
+                  }
+                  ${dragState.tableId === table.id ? 'scale-110 shadow-lg z-10' : 'hover:scale-105'}
+                `}
+                style={{
+                  left: `${table.position.x}px`,
+                  top: `${table.position.y}px`,
+                }}
+                onMouseDown={(e) => handleMouseDown(e, table.id)}
+                title={`${table.name} - Capacity: ${table.capacity.min}-${table.capacity.max}`}
+              >
+                <div className="text-center pointer-events-none">
+                  <div className="font-semibold">{table.name.split(' ')[1] || table.name}</div>
+                  <div className="text-xs opacity-75">{table.capacity.min}-{table.capacity.max}</div>
+                </div>
+              </div>
+            ))
+          )}
 
           {selectedArea === 'bar' && (
             <div className="absolute bottom-2 left-1/2 transform -translate-x-1/2 text-xs text-gray-500 font-medium pointer-events-none">

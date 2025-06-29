@@ -28,8 +28,10 @@ const initializeDatabase = () => {
     CREATE TABLE IF NOT EXISTS customers (
       id TEXT PRIMARY KEY,
       name TEXT NOT NULL,
+      phone TEXT NOT NULL,
       email TEXT,
-      phone TEXT,
+      notes TEXT,
+      vip_status INTEGER NOT NULL DEFAULT 0,
       created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
       updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
     )
@@ -40,11 +42,12 @@ const initializeDatabase = () => {
     CREATE TABLE IF NOT EXISTS reservations (
       id TEXT PRIMARY KEY,
       customer_id TEXT NOT NULL,
-      date TEXT NOT NULL,
-      time TEXT NOT NULL,
       party_size INTEGER NOT NULL,
-      status TEXT NOT NULL DEFAULT 'confirmed' CHECK (status IN ('confirmed', 'cancelled', 'completed')),
-      notes TEXT,
+      date TEXT NOT NULL,
+      start_time TEXT NOT NULL,
+      end_time TEXT NOT NULL,
+      status TEXT NOT NULL DEFAULT 'confirmed' CHECK (status IN ('confirmed', 'seated', 'completed', 'cancelled', 'no-show')),
+      special_requests TEXT,
       created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
       updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
       FOREIGN KEY (customer_id) REFERENCES customers (id)
@@ -54,13 +57,12 @@ const initializeDatabase = () => {
   // Create reservation_tables junction table
   db.run(`
     CREATE TABLE IF NOT EXISTS reservation_tables (
-      id TEXT PRIMARY KEY,
       reservation_id TEXT NOT NULL,
       table_id TEXT NOT NULL,
       created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
       FOREIGN KEY (reservation_id) REFERENCES reservations (id),
       FOREIGN KEY (table_id) REFERENCES tables (id),
-      UNIQUE(reservation_id, table_id)
+      PRIMARY KEY (reservation_id, table_id)
     )
   `);
 };

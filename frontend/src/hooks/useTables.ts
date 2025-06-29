@@ -38,18 +38,12 @@ export const useTables = () => {
         }
         const data: Table[] = await response.json();
         
-        // If no tables in database, use initial tables
-        if (data.length === 0) {
-          setTables(initialTables);
-          // Save initial tables to database
-          await saveTablesEndpoint(initialTables);
-        } else {
-          setTables(data);
-        }
+        // Always use data from database, even if empty
+        setTables(data);
       } catch (err) {
         console.error("Error loading tables:", err);
-        // Fallback to initial tables if database fails
-        setTables(initialTables);
+        // On error, start with empty array instead of fallback
+        setTables([]);
       } finally {
         setIsLoading(false);
       }
@@ -119,6 +113,10 @@ export const useTables = () => {
     await updateTables(initialTables);
   }, [updateTables]);
 
+  const loadInitialTables = useCallback(async () => {
+    await updateTables(initialTables);
+  }, [updateTables]);
+
   return {
     tables,
     updateTables,
@@ -128,6 +126,7 @@ export const useTables = () => {
     getTablesByArea,
     getActiveTablesByArea,
     resetTables,
+    loadInitialTables,
     isLoading
   };
 };
