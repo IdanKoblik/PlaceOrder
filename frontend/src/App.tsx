@@ -1,10 +1,7 @@
 import React, { useState } from 'react';
 import { Calendar, Users, LayoutGrid, BarChart3, Plus, Settings, Clock } from 'lucide-react';
 import { LanguageProvider, useLanguage } from './contexts/LanguageContext';
-import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { LanguageSwitch } from './components/LanguageSwitch';
-import { UserProfile } from './components/UserProfile';
-import { LoginPage } from './components/LoginPage';
 import { PasswordModal } from './components/PasswordModal';
 import { ConfigManagement } from './components/ConfigManagement';
 import { Dashboard } from './components/Dashboard';
@@ -20,7 +17,6 @@ type ActiveView = 'dashboard' | 'reservations' | 'form' | 'tables' | 'config';
 
 function AppContent() {
   const { t } = useLanguage();
-  const { isAuthenticated, isLoading } = useAuth();
   const { 
     reservations, 
     createReservation, 
@@ -43,23 +39,6 @@ function AppContent() {
     { id: 'tables', label: 'Table Management', icon: Settings },
     { id: 'config', label: 'Working Hours', icon: Clock },
   ];
-
-  // Show loading screen while checking authentication
-  if (isLoading) {
-    return (
-      <div className="min-h-screen bg-gray-100 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading...</p>
-        </div>
-      </div>
-    );
-  }
-
-  // Show login page if not authenticated
-  if (!isAuthenticated) {
-    return <LoginPage />;
-  }
 
   const handleSaveReservation = (reservationData: Omit<Reservation, 'id' | 'createdAt' | 'updatedAt'>) => {
     if (editingReservation) {
@@ -173,7 +152,6 @@ function AppContent() {
                 </button>
               )}
               <LanguageSwitch />
-              <UserProfile />
             </div>
           </div>
         </div>
@@ -260,11 +238,9 @@ function AppContent() {
 
 function App() {
   return (
-    <AuthProvider>
-      <LanguageProvider>
-        <AppContent />
-      </LanguageProvider>
-    </AuthProvider>
+    <LanguageProvider>
+      <AppContent />
+    </LanguageProvider>
   );
 }
 
