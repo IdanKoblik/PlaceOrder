@@ -4,7 +4,7 @@ import { LanguageProvider, useLanguage } from './contexts/LanguageContext';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { LanguageSwitch } from './components/LanguageSwitch';
 import { UserProfile } from './components/UserProfile';
-import { AuthModal } from './components/AuthModal';
+import { LoginPage } from './components/LoginPage';
 import { PasswordModal } from './components/PasswordModal';
 import { Dashboard } from './components/Dashboard';
 import { ReservationList } from './components/ReservationList';
@@ -18,7 +18,7 @@ type ActiveView = 'dashboard' | 'reservations' | 'form' | 'tables';
 
 function AppContent() {
   const { t } = useLanguage();
-  const { isAuthenticated, checkAdminAccess } = useAuth();
+  const { isAuthenticated, isLoading } = useAuth();
   const { 
     reservations, 
     createReservation, 
@@ -26,11 +26,10 @@ function AppContent() {
     deleteReservation 
   } = useReservations();
   
-  const { tables, updateTables, isLoading } = useTables();
+  const { tables, updateTables, isLoading: tablesLoading } = useTables();
 
   const [activeView, setActiveView] = useState<ActiveView>('dashboard');
   const [editingReservation, setEditingReservation] = useState<Reservation | undefined>();
-  const [showAuthModal, setShowAuthModal] = useState(false);
   const [showPasswordModal, setShowPasswordModal] = useState(false);
   const [isTableManagementUnlocked, setIsTableManagementUnlocked] = useState(false);
 
@@ -39,6 +38,23 @@ function AppContent() {
     { id: 'reservations', label: t('nav.reservations'), icon: Calendar },
     { id: 'tables', label: 'Table Management', icon: Settings },
   ];
+
+  // Show loading screen while checking authentication
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gray-100 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Show login page if not authenticated
+  if (!isAuthenticated) {
+    return <LoginPage />;
+  }
 
   const handleSaveReservation = (reservationData: Omit<Reservation, 'id' | 'createdAt' | 'updatedAt'>) => {
     if (editingReservation) {
@@ -77,36 +93,13 @@ function AppContent() {
 
   const handleNavigationClick = (viewId: string) => {
     if (viewId === 'tables') {
-      // Check if user is authenticated first
-      if (!isAuthenticated) {
-        setShowAuthModal(true);
-        return;
-      }
-      
-      // If authenticated but not admin, show auth modal with admin requirement
-      if (!checkAdminAccess()) {
-        setShowAuthModal(true);
-        return;
-      }
-      
-      // If admin but table management not unlocked, show password modal
+      // For table management, require password
       if (!isTableManagementUnlocked) {
         setShowPasswordModal(true);
         return;
       }
     }
     setActiveView(viewId as ActiveView);
-  };
-
-  const handleAuthSuccess = () => {
-    setShowAuthModal(false);
-    
-    // After successful auth, check if we need password for table management
-    if (checkAdminAccess() && !isTableManagementUnlocked) {
-      setShowPasswordModal(true);
-    } else {
-      setActiveView('tables');
-    }
   };
 
   const handlePasswordSuccess = () => {
@@ -132,7 +125,7 @@ function AppContent() {
               <nav className="hidden md:flex space-x-8">
                 {navigation.map((item) => {
                   const Icon = item.icon;
-                  const isLocked = item.id === 'tables' && (!isAuthenticated || !checkAdminAccess() || !isTableManagementUnlocked);
+                  const isLocked = item.id === 'tables' && !isTableManagementUnlocked;
                   
                   return (
                     <button
@@ -198,11 +191,11 @@ function AppContent() {
           />
         )}
 
-        {activeView === 'tables' && isAuthenticated && checkAdminAccess() && isTableManagementUnlocked && (
+        {activeView === 'tables' && isTableManagementUnlocked && (
           <TableManagement
             tables={tables}
             onUpdateTables={updateTables}
-            isLoading={isLoading}
+            isLoading={tablesLoading}
           />
         )}
       </main>
@@ -212,7 +205,7 @@ function AppContent() {
         <div className="grid grid-cols-3 gap-1">
           {navigation.map((item) => {
             const Icon = item.icon;
-            const isLocked = item.id === 'tables' && (!isAuthenticated || !checkAdminAccess() || !isTableManagementUnlocked);
+            const isLocked = item.id === 'tables' && !isTableManagementUnlocked;
             
             return (
               <button
@@ -235,16 +228,7 @@ function AppContent() {
         </div>
       </div>
 
-      {/* Auth Modal */}
-      <AuthModal
-        isOpen={showAuthModal}
-        onClose={() => setShowAuthModal(false)}
-        onSuccess={handleAuthSuccess}
-        title="Table Management Access"
-        requireAdmin={true}
-      />
-
-      {/* Password Modal */}
+      {/* Password Modal for Table Management */}
       <PasswordModal
         isOpen={showPasswordModal}
         onClose={() => setShowPasswordModal(false)}
