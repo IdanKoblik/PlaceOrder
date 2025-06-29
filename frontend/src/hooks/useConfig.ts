@@ -131,6 +131,7 @@ export const useConfig = () => {
     const closeTimeMinutes = closeHour * 60 + closeMinute;
     
     // Generate slots from open time to close time minus reservation duration
+    // Use timeSlotDuration for the increment between slots
     const lastSlotTime = closeTimeMinutes - config.reservationDuration;
     
     for (let time = openTimeMinutes; time <= lastSlotTime; time += config.timeSlotDuration) {
