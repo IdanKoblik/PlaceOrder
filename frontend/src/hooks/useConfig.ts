@@ -106,7 +106,13 @@ export const useConfig = () => {
   }, [config, updateConfig]);
 
   const getWorkingHoursForDate = useCallback((date: string) => {
-    const dayOfWeek = new Date(date).toLocaleDateString('en-US', { weekday: 'lowercase' }) as DayOfWeek;
+    // Get day of week as a number (0 = Sunday, 1 = Monday, etc.)
+    const dayIndex = new Date(date).getDay();
+    
+    // Convert to our DayOfWeek type
+    const dayNames: DayOfWeek[] = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
+    const dayOfWeek = dayNames[dayIndex];
+    
     return config.workingHours[dayOfWeek];
   }, [config]);
 
