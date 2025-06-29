@@ -3,21 +3,23 @@ import { Calendar, Clock, Users, Phone, User, MessageSquare, Save, X } from 'luc
 import { useLanguage } from '../contexts/LanguageContext';
 import { useReservations } from '../hooks/useReservations';
 import { TableLayout } from './TableLayout';
-import type { Reservation } from '../../../shared/types';
+import type { Reservation, Table } from '../../../shared/types';
 
 interface ReservationFormProps {
   reservation?: Reservation;
   onSave: (reservation: Omit<Reservation, 'id' | 'createdAt' | 'updatedAt'>) => void;
   onCancel: () => void;
+  tables: Table[];
 }
 
 export const ReservationForm: React.FC<ReservationFormProps> = ({
   reservation,
   onSave,
-  onCancel
+  onCancel,
+  tables
 }) => {
   const { t, isRTL } = useLanguage();
-  const { tables, getAvailableTables, getTableStatus, generateTimeSlots } = useReservations();
+  const { getAvailableTables, getTableStatus, generateTimeSlots } = useReservations();
 
   const [formData, setFormData] = useState({
     customer: {

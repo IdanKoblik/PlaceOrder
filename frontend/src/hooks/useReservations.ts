@@ -1,29 +1,6 @@
 import { useState, useCallback, useMemo, useEffect } from 'react';
 import type { Reservation, Customer, Table } from '../../../shared/types';
 
-const mockTables: Table[] = [
-  // Bar Area - Adjustable chairs
-  { id: 'bar-1', name: 'Bar 1-2', area: 'bar', capacity: { min: 1, max: 2 }, isAdjustable: true, position: { x: 50, y: 20 }, isActive: true },
-  { id: 'bar-2', name: 'Bar 3-4', area: 'bar', capacity: { min: 1, max: 2 }, isAdjustable: true, position: { x: 150, y: 20 }, isActive: true },
-  { id: 'bar-3', name: 'Bar 5-6', area: 'bar', capacity: { min: 1, max: 2 }, isAdjustable: true, position: { x: 250, y: 20 }, isActive: true },
-  { id: 'bar-4', name: 'Bar 7-8', area: 'bar', capacity: { min: 1, max: 2 }, isAdjustable: true, position: { x: 350, y: 20 }, isActive: true },
-  
-  // Inside Dining - Flexible tables
-  { id: 'in-1', name: 'Table 1', area: 'inside', capacity: { min: 2, max: 4 }, isAdjustable: true, position: { x: 80, y: 80 }, isActive: true },
-  { id: 'in-2', name: 'Table 2', area: 'inside', capacity: { min: 2, max: 4 }, isAdjustable: true, position: { x: 200, y: 80 }, isActive: true },
-  { id: 'in-3', name: 'Table 3', area: 'inside', capacity: { min: 4, max: 6 }, isAdjustable: true, position: { x: 320, y: 80 }, isActive: true },
-  { id: 'in-4', name: 'Table 4', area: 'inside', capacity: { min: 2, max: 4 }, isAdjustable: true, position: { x: 80, y: 160 }, isActive: true },
-  { id: 'in-5', name: 'Table 5', area: 'inside', capacity: { min: 4, max: 8 }, isAdjustable: true, position: { x: 200, y: 160 }, isActive: true },
-  { id: 'in-6', name: 'Table 6', area: 'inside', capacity: { min: 2, max: 4 }, isAdjustable: true, position: { x: 320, y: 160 }, isActive: true },
-  
-  // Outside Patio - Fixed tables
-  { id: 'out-1', name: 'Patio 1', area: 'outside', capacity: { min: 2, max: 2 }, isAdjustable: false, position: { x: 60, y: 60 }, isActive: true },
-  { id: 'out-2', name: 'Patio 2', area: 'outside', capacity: { min: 4, max: 4 }, isAdjustable: false, position: { x: 180, y: 60 }, isActive: true },
-  { id: 'out-3', name: 'Patio 3', area: 'outside', capacity: { min: 2, max: 2 }, isAdjustable: false, position: { x: 300, y: 60 }, isActive: true },
-  { id: 'out-4', name: 'Patio 4', area: 'outside', capacity: { min: 6, max: 6 }, isAdjustable: false, position: { x: 120, y: 140 }, isActive: true },
-  { id: 'out-5', name: 'Patio 5', area: 'outside', capacity: { min: 4, max: 4 }, isAdjustable: false, position: { x: 240, y: 140 }, isActive: true },
-];
-
 const mockReservations: Reservation[] = [
   {
     id: '1',
@@ -53,7 +30,6 @@ const mockReservations: Reservation[] = [
 
 export const useReservations = () => {
   const [reservations, setReservations] = useState<Reservation[]>([]);
-  const [tables] = useState<Table[]>(mockTables);
 
   //http://0.0.0.0:3000/api/v1/reservations
   useEffect(() => {
@@ -152,7 +128,7 @@ export const useReservations = () => {
     setReservations(prev => prev.filter(reservation => reservation.id !== id));
   }, []);
 
-  const getAvailableTables = useCallback((date: string, startTime: string, endTime: string, partySize: number) => {
+  const getAvailableTables = useCallback((date: string, startTime: string, endTime: string, partySize: number, tables: Table[] = []) => {
     const conflictingReservations = reservations.filter(reservation => 
       reservation.date === date &&
       reservation.status !== 'cancelled' &&
@@ -169,7 +145,7 @@ export const useReservations = () => {
       table.capacity.min <= partySize &&
       table.capacity.max >= partySize
     );
-  }, [reservations, tables]);
+  }, [reservations]);
 
   const getTableStatus = useCallback((tableId: string, date: string, time: string) => {
     const currentReservation = reservations.find(reservation =>
@@ -220,7 +196,6 @@ export const useReservations = () => {
 
   return {
     reservations,
-    tables,
     createReservation,
     updateReservation,
     deleteReservation,

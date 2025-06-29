@@ -1,11 +1,13 @@
 import React, { useState } from 'react';
-import { Calendar, Users, LayoutGrid, BarChart3, Plus } from 'lucide-react';
+import { Calendar, Users, LayoutGrid, BarChart3, Plus, Settings } from 'lucide-react';
 import { LanguageProvider, useLanguage } from './contexts/LanguageContext';
 import { LanguageSwitch } from './components/LanguageSwitch';
 import { Dashboard } from './components/Dashboard';
 import { ReservationList } from './components/ReservationList';
 import { ReservationForm } from './components/ReservationForm';
+import { TableManagement } from './components/TableManagement';
 import { useReservations } from './hooks/useReservations';
+import { useTables } from './hooks/useTables';
 import type { Reservation } from '../../shared/types';
 
 type ActiveView = 'dashboard' | 'reservations' | 'form' | 'tables';
@@ -14,11 +16,12 @@ function AppContent() {
   const { t } = useLanguage();
   const { 
     reservations, 
-    tables, 
     createReservation, 
     updateReservation, 
     deleteReservation 
   } = useReservations();
+  
+  const { tables, updateTables } = useTables();
 
   const [activeView, setActiveView] = useState<ActiveView>('dashboard');
   const [editingReservation, setEditingReservation] = useState<Reservation | undefined>();
@@ -26,6 +29,7 @@ function AppContent() {
   const navigation = [
     { id: 'dashboard', label: t('nav.dashboard'), icon: LayoutGrid },
     { id: 'reservations', label: t('nav.reservations'), icon: Calendar },
+    { id: 'tables', label: 'Table Management', icon: Settings },
   ];
 
   const handleSaveReservation = (reservationData: Omit<Reservation, 'id' | 'createdAt' | 'updatedAt'>) => {
@@ -134,13 +138,21 @@ function AppContent() {
             reservation={editingReservation}
             onSave={handleSaveReservation}
             onCancel={handleCancelForm}
+            tables={tables}
+          />
+        )}
+
+        {activeView === 'tables' && (
+          <TableManagement
+            tables={tables}
+            onUpdateTables={updateTables}
           />
         )}
       </main>
 
       {/* Mobile Navigation */}
       <div className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200">
-        <div className="grid grid-cols-2 gap-1">
+        <div className="grid grid-cols-3 gap-1">
           {navigation.map((item) => {
             const Icon = item.icon;
             return (
