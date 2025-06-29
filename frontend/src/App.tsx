@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Calendar, Users, LayoutGrid, BarChart3, Plus, Settings } from 'lucide-react';
 import { LanguageProvider, useLanguage } from './contexts/LanguageContext';
 import { LanguageSwitch } from './components/LanguageSwitch';
+import { PasswordModal } from './components/PasswordModal';
 import { Dashboard } from './components/Dashboard';
 import { ReservationList } from './components/ReservationList';
 import { ReservationForm } from './components/ReservationForm';
@@ -25,6 +26,8 @@ function AppContent() {
 
   const [activeView, setActiveView] = useState<ActiveView>('dashboard');
   const [editingReservation, setEditingReservation] = useState<Reservation | undefined>();
+  const [showPasswordModal, setShowPasswordModal] = useState(false);
+  const [isTableManagementUnlocked, setIsTableManagementUnlocked] = useState(false);
 
   const navigation = [
     { id: 'dashboard', label: t('nav.dashboard'), icon: LayoutGrid },
@@ -67,6 +70,22 @@ function AppContent() {
     setActiveView('reservations');
   };
 
+  const handleNavigationClick = (viewId: string) => {
+    if (viewId === 'tables') {
+      if (!isTableManagementUnlocked) {
+        setShowPasswordModal(true);
+        return;
+      }
+    }
+    setActiveView(viewId as ActiveView);
+  };
+
+  const handlePasswordSuccess = () => {
+    setIsTableManagementUnlocked(true);
+    setShowPasswordModal(false);
+    setActiveView('tables');
+  };
+
   return (
     <div className="min-h-screen bg-gray-100">
       {/* Header */}
@@ -84,18 +103,25 @@ function AppContent() {
               <nav className="hidden md:flex space-x-8">
                 {navigation.map((item) => {
                   const Icon = item.icon;
+                  const isLocked = item.id === 'tables' && !isTableManagementUnlocked;
+                  
                   return (
                     <button
                       key={item.id}
-                      onClick={() => setActiveView(item.id as ActiveView)}
+                      onClick={() => handleNavigationClick(item.id)}
                       className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
                         activeView === item.id
                           ? 'bg-blue-100 text-blue-700'
                           : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
-                      }`}
+                      } ${isLocked ? 'relative' : ''}`}
                     >
                       <Icon size={16} />
                       {item.label}
+                      {isLocked && (
+                        <div className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full flex items-center justify-center">
+                          <div className="w-1.5 h-1.5 bg-white rounded-full"></div>
+                        </div>
+                      )}
                     </button>
                   );
                 })}
@@ -142,7 +168,7 @@ function AppContent() {
           />
         )}
 
-        {activeView === 'tables' && (
+        {activeView === 'tables' && isTableManagementUnlocked && (
           <TableManagement
             tables={tables}
             onUpdateTables={updateTables}
@@ -156,11 +182,13 @@ function AppContent() {
         <div className="grid grid-cols-3 gap-1">
           {navigation.map((item) => {
             const Icon = item.icon;
+            const isLocked = item.id === 'tables' && !isTableManagementUnlocked;
+            
             return (
               <button
                 key={item.id}
-                onClick={() => setActiveView(item.id as ActiveView)}
-                className={`flex flex-col items-center gap-1 p-3 ${
+                onClick={() => handleNavigationClick(item.id)}
+                className={`flex flex-col items-center gap-1 p-3 relative ${
                   activeView === item.id
                     ? 'text-blue-600 bg-blue-50'
                     : 'text-gray-600'
@@ -168,11 +196,22 @@ function AppContent() {
               >
                 <Icon size={20} />
                 <span className="text-xs font-medium">{item.label}</span>
+                {isLocked && (
+                  <div className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full"></div>
+                )}
               </button>
             );
           })}
         </div>
       </div>
+
+      {/* Password Modal */}
+      <PasswordModal
+        isOpen={showPasswordModal}
+        onClose={() => setShowPasswordModal(false)}
+        onSuccess={handlePasswordSuccess}
+        title="Table Management Access"
+      />
     </div>
   );
 }
