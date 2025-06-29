@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Clock, Calendar, Settings, Save, X, AlertCircle, CheckCircle } from 'lucide-react';
+import { useLanguage } from '../contexts/LanguageContext';
 import { useConfig } from '../hooks/useConfig';
 import type { DayOfWeek, WorkingHours } from '../../../shared/types';
 
@@ -8,19 +9,20 @@ interface ConfigManagementProps {
 }
 
 export const ConfigManagement: React.FC<ConfigManagementProps> = ({ onClose }) => {
+  const { t } = useLanguage();
   const { config, updateConfig, isLoading } = useConfig();
   const [formData, setFormData] = useState(config);
   const [isSaving, setIsSaving] = useState(false);
   const [saveStatus, setSaveStatus] = useState<'idle' | 'success' | 'error'>('idle');
 
   const daysOfWeek: { key: DayOfWeek; label: string }[] = [
-    { key: 'monday', label: 'Monday' },
-    { key: 'tuesday', label: 'Tuesday' },
-    { key: 'wednesday', label: 'Wednesday' },
-    { key: 'thursday', label: 'Thursday' },
-    { key: 'friday', label: 'Friday' },
-    { key: 'saturday', label: 'Saturday' },
-    { key: 'sunday', label: 'Sunday' },
+    { key: 'monday', label: t('days.monday') },
+    { key: 'tuesday', label: t('days.tuesday') },
+    { key: 'wednesday', label: t('days.wednesday') },
+    { key: 'thursday', label: t('days.thursday') },
+    { key: 'friday', label: t('days.friday') },
+    { key: 'saturday', label: t('days.saturday') },
+    { key: 'sunday', label: t('days.sunday') },
   ];
 
   const handleWorkingHoursChange = (day: DayOfWeek, field: keyof WorkingHours, value: any) => {
@@ -100,7 +102,7 @@ export const ConfigManagement: React.FC<ConfigManagementProps> = ({ onClose }) =
         <div className="bg-white rounded-xl shadow-lg p-6">
           <div className="flex items-center gap-3">
             <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
-            <span>Loading configuration...</span>
+            <span>{t('config.loadingConfiguration')}</span>
           </div>
         </div>
       </div>
@@ -116,7 +118,7 @@ export const ConfigManagement: React.FC<ConfigManagementProps> = ({ onClose }) =
             <div className="p-2 bg-blue-100 rounded-lg">
               <Settings className="w-6 h-6 text-blue-600" />
             </div>
-            <h2 className="text-2xl font-bold text-gray-800">Restaurant Configuration</h2>
+            <h2 className="text-2xl font-bold text-gray-800">{t('config.restaurantConfiguration')}</h2>
           </div>
           <button
             onClick={onClose}
@@ -131,13 +133,13 @@ export const ConfigManagement: React.FC<ConfigManagementProps> = ({ onClose }) =
           <div className="space-y-4">
             <h3 className="text-lg font-semibold text-gray-800 flex items-center gap-2">
               <Settings size={20} />
-              General Settings
+              {t('config.generalSettings')}
             </h3>
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Restaurant Name
+                  {t('config.restaurantName')}
                 </label>
                 <input
                   type="text"
@@ -149,50 +151,50 @@ export const ConfigManagement: React.FC<ConfigManagementProps> = ({ onClose }) =
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Time Slot Duration (minutes)
+                  {t('config.timeSlotDuration')} ({t('config.minutes')})
                 </label>
                 <select
                   value={formData.timeSlotDuration}
                   onChange={(e) => handleSettingsChange('timeSlotDuration', parseInt(e.target.value))}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 >
-                  <option value={15}>15 minutes</option>
-                  <option value={30}>30 minutes</option>
-                  <option value={60}>60 minutes</option>
+                  <option value={15}>15 {t('config.minutes')}</option>
+                  <option value={30}>30 {t('config.minutes')}</option>
+                  <option value={60}>60 {t('config.minutes')}</option>
                 </select>
               </div>
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Reservation Duration (minutes)
+                  {t('config.reservationDuration')} ({t('config.minutes')})
                 </label>
                 <select
                   value={formData.reservationDuration}
                   onChange={(e) => handleSettingsChange('reservationDuration', parseInt(e.target.value))}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 >
-                  <option value={60}>1 hour</option>
-                  <option value={90}>1.5 hours</option>
-                  <option value={120}>2 hours</option>
-                  <option value={150}>2.5 hours</option>
-                  <option value={180}>3 hours</option>
+                  <option value={60}>1 {t('time.hours')}</option>
+                  <option value={90}>1.5 {t('time.hours')}</option>
+                  <option value={120}>2 {t('time.hours')}</option>
+                  <option value={150}>2.5 {t('time.hours')}</option>
+                  <option value={180}>3 {t('time.hours')}</option>
                 </select>
               </div>
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Advance Booking (days)
+                  {t('config.advanceBooking')} ({t('days.monday')})
                 </label>
                 <select
                   value={formData.advanceBookingDays}
                   onChange={(e) => handleSettingsChange('advanceBookingDays', parseInt(e.target.value))}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 >
-                  <option value={7}>1 week</option>
-                  <option value={14}>2 weeks</option>
-                  <option value={30}>1 month</option>
-                  <option value={60}>2 months</option>
-                  <option value={90}>3 months</option>
+                  <option value={7}>1 {t('config.week')}</option>
+                  <option value={14}>2 {t('config.weeks')}</option>
+                  <option value={30}>1 {t('config.month')}</option>
+                  <option value={60}>2 {t('config.months')}</option>
+                  <option value={90}>3 {t('config.months')}</option>
                 </select>
               </div>
             </div>
@@ -202,7 +204,7 @@ export const ConfigManagement: React.FC<ConfigManagementProps> = ({ onClose }) =
           <div className="space-y-4">
             <h3 className="text-lg font-semibold text-gray-800 flex items-center gap-2">
               <Clock size={20} />
-              Working Hours
+              {t('config.workingHours')}
             </h3>
             
             <div className="space-y-4">
@@ -221,7 +223,7 @@ export const ConfigManagement: React.FC<ConfigManagementProps> = ({ onClose }) =
                             onChange={(e) => handleWorkingHoursChange(key, 'isOpen', e.target.checked)}
                             className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
                           />
-                          <span className="text-sm text-gray-600">Open</span>
+                          <span className="text-sm text-gray-600">{t('actions.open')}</span>
                         </label>
                       </div>
                       
@@ -229,7 +231,7 @@ export const ConfigManagement: React.FC<ConfigManagementProps> = ({ onClose }) =
                         onClick={() => handleCopyHours(key)}
                         className="text-xs px-2 py-1 bg-blue-100 text-blue-700 rounded hover:bg-blue-200 transition-colors"
                       >
-                        Copy to all days
+                        {t('actions.copyToAllDays')}
                       </button>
                     </div>
                     
@@ -237,7 +239,7 @@ export const ConfigManagement: React.FC<ConfigManagementProps> = ({ onClose }) =
                       <div className="grid grid-cols-2 gap-4">
                         <div>
                           <label className="block text-xs font-medium text-gray-600 mb-1">
-                            Open Time
+                            {t('time.openTime')}
                           </label>
                           <select
                             value={dayHours.openTime}
@@ -252,7 +254,7 @@ export const ConfigManagement: React.FC<ConfigManagementProps> = ({ onClose }) =
                         
                         <div>
                           <label className="block text-xs font-medium text-gray-600 mb-1">
-                            Close Time
+                            {t('time.closeTime')}
                           </label>
                           <select
                             value={dayHours.closeTime}
@@ -282,12 +284,12 @@ export const ConfigManagement: React.FC<ConfigManagementProps> = ({ onClose }) =
               {saveStatus === 'success' ? (
                 <>
                   <CheckCircle size={20} />
-                  <span>Configuration saved successfully!</span>
+                  <span>{t('config.configurationSaved')}</span>
                 </>
               ) : (
                 <>
                   <AlertCircle size={20} />
-                  <span>Failed to save configuration. Please try again.</span>
+                  <span>{t('config.failedToSave')}</span>
                 </>
               )}
             </div>
@@ -300,7 +302,7 @@ export const ConfigManagement: React.FC<ConfigManagementProps> = ({ onClose }) =
             onClick={onClose}
             className="px-6 py-2 text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
           >
-            Cancel
+            {t('actions.cancel')}
           </button>
           <button
             onClick={handleSave}
@@ -310,12 +312,12 @@ export const ConfigManagement: React.FC<ConfigManagementProps> = ({ onClose }) =
             {isSaving ? (
               <>
                 <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                Saving...
+                {t('config.saving')}
               </>
             ) : (
               <>
                 <Save size={16} />
-                Save Configuration
+                {t('config.saveConfiguration')}
               </>
             )}
           </button>

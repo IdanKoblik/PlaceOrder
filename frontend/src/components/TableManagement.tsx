@@ -102,7 +102,7 @@ ${sqlStatements.join('\n')}`;
   };
 
   const handleLoadSampleTables = async () => {
-    if (confirm('This will load sample table data. Continue?')) {
+    if (confirm(t('table.loadSampleTables') + '?')) {
       const sampleTables: Table[] = [
         // Bar Area - Adjustable chairs
         { id: 'bar-1', name: 'Bar 1-2', area: 'bar', capacity: { min: 1, max: 2 }, isAdjustable: true, position: { x: 50, y: 20 }, isActive: true },
@@ -202,7 +202,7 @@ ${sqlStatements.join('\n')}`;
   };
 
   const handleDeleteTable = (tableId: string) => {
-    if (confirm('Are you sure you want to delete this table?')) {
+    if (confirm(t('actions.delete') + '?')) {
       const updatedTables = tables.filter(table => table.id !== tableId);
       onUpdateTables(updatedTables);
     }
@@ -219,7 +219,7 @@ ${sqlStatements.join('\n')}`;
     return (
       <div className="flex items-center justify-center py-12">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-        <span className="ml-3 text-gray-600">Loading tables...</span>
+        <span className="ml-3 text-gray-600">{t('common.loading')}</span>
       </div>
     );
   }
@@ -228,7 +228,7 @@ ${sqlStatements.join('\n')}`;
     <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <h2 className="text-2xl font-bold text-gray-800">Table Management</h2>
+        <h2 className="text-2xl font-bold text-gray-800">{t('table.tableManagement')}</h2>
         <div className="flex items-center gap-3">
           {tables.length === 0 && (
             <button
@@ -236,7 +236,7 @@ ${sqlStatements.join('\n')}`;
               className="flex items-center gap-2 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
             >
               <Upload size={16} />
-              Load Sample Tables
+              {t('table.loadSampleTables')}
             </button>
           )}
           <button
@@ -245,14 +245,14 @@ ${sqlStatements.join('\n')}`;
             className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors"
           >
             <Download size={16} />
-            Export Tables
+            {t('table.exportTables')}
           </button>
           <button
             onClick={() => setIsAddingTable(true)}
             className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
           >
             <Plus size={16} />
-            Add Table
+            {t('table.addTable')}
           </button>
         </div>
       </div>
@@ -281,7 +281,7 @@ ${sqlStatements.join('\n')}`;
             {t(`areas.${selectedArea}`)} Layout
           </h3>
           <div className="text-sm text-gray-600">
-            {tables.length > 0 ? 'Drag tables to reposition them' : 'No tables configured'}
+            {tables.length > 0 ? t('table.dragToReposition') : t('table.noTablesConfigured')}
           </div>
         </div>
 
@@ -297,8 +297,8 @@ ${sqlStatements.join('\n')}`;
             <div className="absolute inset-0 flex items-center justify-center text-gray-400">
               <div className="text-center">
                 <Settings size={48} className="mx-auto mb-2 opacity-50" />
-                <p className="text-sm">No tables in this area</p>
-                <p className="text-xs">Click "Add Table" to get started</p>
+                <p className="text-sm">{t('table.noTablesConfigured')}</p>
+                <p className="text-xs">{t('table.clickAddTable')}</p>
               </div>
             </div>
           ) : (
@@ -318,7 +318,7 @@ ${sqlStatements.join('\n')}`;
                   top: `${table.position.y}px`,
                 }}
                 onMouseDown={(e) => handleMouseDown(e, table.id)}
-                title={`${table.name} - Capacity: ${table.capacity.min}-${table.capacity.max}`}
+                title={`${table.name} - ${t('table.capacity')}: ${table.capacity.min}-${table.capacity.max}`}
               >
                 <div className="text-center pointer-events-none">
                   <div className="font-semibold">{table.name.split(' ')[1] || table.name}</div>
@@ -346,7 +346,7 @@ ${sqlStatements.join('\n')}`;
       <div className="bg-white rounded-xl shadow-sm border border-gray-200">
         <div className="p-6 border-b border-gray-200">
           <h3 className="text-lg font-semibold text-gray-800">
-            {t(`areas.${selectedArea}`)} Tables ({currentAreaTables.length})
+            {t(`areas.${selectedArea}`)} ({currentAreaTables.length})
           </h3>
         </div>
         
@@ -354,8 +354,8 @@ ${sqlStatements.join('\n')}`;
           {currentAreaTables.length === 0 ? (
             <div className="p-8 text-center text-gray-500">
               <Settings size={48} className="mx-auto mb-4 text-gray-300" />
-              <p className="text-lg font-medium">No tables in this area</p>
-              <p className="text-sm">Click "Add Table" to create your first table</p>
+              <p className="text-lg font-medium">{t('table.noTablesConfigured')}</p>
+              <p className="text-sm">{t('table.clickAddTable')}</p>
             </div>
           ) : (
             currentAreaTables.map((table) => (
@@ -369,19 +369,19 @@ ${sqlStatements.join('\n')}`;
                           ? 'bg-green-100 text-green-800' 
                           : 'bg-gray-100 text-gray-600'
                       }`}>
-                        {table.isActive ? 'Active' : 'Inactive'}
+                        {table.isActive ? t('table.active') : t('table.inactive')}
                       </span>
                     </div>
                     
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm text-gray-600">
                       <div>
-                        <span className="font-medium">Capacity:</span> {table.capacity.min}-{table.capacity.max}
+                        <span className="font-medium">{t('table.capacity')}:</span> {table.capacity.min}-{table.capacity.max}
                       </div>
                       <div>
-                        <span className="font-medium">Position:</span> ({table.position.x}, {table.position.y})
+                        <span className="font-medium">{t('table.position')}:</span> ({table.position.x}, {table.position.y})
                       </div>
                       <div>
-                        <span className="font-medium">Adjustable:</span> {table.isAdjustable ? 'Yes' : 'No'}
+                        <span className="font-medium">{t('table.adjustable')}:</span> {table.isAdjustable ? t('actions.open') : t('actions.close')}
                       </div>
                       <div>
                         <span className="font-medium">Area:</span> {t(`areas.${table.area}`)}
@@ -398,13 +398,13 @@ ${sqlStatements.join('\n')}`;
                           : 'bg-green-100 text-green-700 hover:bg-green-200'
                       }`}
                     >
-                      {table.isActive ? 'Deactivate' : 'Activate'}
+                      {table.isActive ? t('table.deactivate') : t('table.activate')}
                     </button>
                     
                     <button
                       onClick={() => handleEditTable(table)}
                       className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-                      title="Edit Table"
+                      title={t('table.editTable')}
                     >
                       <Edit size={16} />
                     </button>
@@ -412,7 +412,7 @@ ${sqlStatements.join('\n')}`;
                     <button
                       onClick={() => handleDeleteTable(table.id)}
                       className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                      title="Delete Table"
+                      title={t('table.deleteTable')}
                     >
                       <Trash2 size={16} />
                     </button>
@@ -491,7 +491,7 @@ const TableEditModal: React.FC<TableEditModalProps> = ({
       <div className="bg-white rounded-xl shadow-lg p-6 w-full max-w-md mx-4">
         <div className="flex items-center justify-between mb-6">
           <h3 className="text-xl font-bold text-gray-800">
-            {table ? 'Edit Table' : 'Add New Table'}
+            {table ? t('table.editTable') : t('table.addTable')}
           </h3>
           <button
             onClick={onCancel}
@@ -504,7 +504,7 @@ const TableEditModal: React.FC<TableEditModalProps> = ({
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              Table Name
+              {t('table.tableName')}
             </label>
             <input
               type="text"
@@ -518,7 +518,7 @@ const TableEditModal: React.FC<TableEditModalProps> = ({
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Min Capacity
+                {t('table.minCapacity')}
               </label>
               <input
                 type="number"
@@ -533,7 +533,7 @@ const TableEditModal: React.FC<TableEditModalProps> = ({
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Max Capacity
+                {t('table.maxCapacity')}
               </label>
               <input
                 type="number"
@@ -550,7 +550,7 @@ const TableEditModal: React.FC<TableEditModalProps> = ({
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                X Position
+                {t('forms.xPosition')}
               </label>
               <input
                 type="number"
@@ -564,7 +564,7 @@ const TableEditModal: React.FC<TableEditModalProps> = ({
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Y Position
+                {t('forms.yPosition')}
               </label>
               <input
                 type="number"
@@ -585,7 +585,7 @@ const TableEditModal: React.FC<TableEditModalProps> = ({
                 onChange={(e) => setFormData(prev => ({ ...prev, isAdjustable: e.target.checked }))}
                 className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
               />
-              <span className="text-sm text-gray-700">Adjustable capacity</span>
+              <span className="text-sm text-gray-700">{t('forms.adjustableCapacity')}</span>
             </label>
 
             <label className="flex items-center gap-2">
@@ -595,7 +595,7 @@ const TableEditModal: React.FC<TableEditModalProps> = ({
                 onChange={(e) => setFormData(prev => ({ ...prev, isActive: e.target.checked }))}
                 className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
               />
-              <span className="text-sm text-gray-700">Active</span>
+              <span className="text-sm text-gray-700">{t('table.active')}</span>
             </label>
           </div>
 
@@ -605,14 +605,14 @@ const TableEditModal: React.FC<TableEditModalProps> = ({
               onClick={onCancel}
               className="px-4 py-2 text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
             >
-              Cancel
+              {t('actions.cancel')}
             </button>
             <button
               type="submit"
               className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
             >
               <Save size={16} />
-              {table ? 'Update' : 'Create'} Table
+              {table ? t('actions.update') : t('actions.create')}
             </button>
           </div>
         </form>

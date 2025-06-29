@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Lock, X, Eye, EyeOff } from 'lucide-react';
+import { useLanguage } from '../contexts/LanguageContext';
 import { buildApiUrl, API_ENDPOINTS } from '../config/api';
 
 interface PasswordModalProps {
@@ -13,8 +14,9 @@ export const PasswordModal: React.FC<PasswordModalProps> = ({
   isOpen,
   onClose,
   onSuccess,
-  title = "Enter Password"
+  title
 }) => {
+  const { t } = useLanguage();
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
@@ -35,7 +37,7 @@ export const PasswordModal: React.FC<PasswordModalProps> = ({
       if (response.ok && data.success) {
         return true;
       } else {
-        throw new Error(data.error || 'Invalid password');
+        throw new Error(data.error || t('messages.invalidPassword'));
       }
     } catch (err) {
       console.error("Password verification error:", err);
@@ -57,7 +59,7 @@ export const PasswordModal: React.FC<PasswordModalProps> = ({
         setError('');
       }
     } catch (err: any) {
-      setError(err.message || 'Password verification failed. Please try again.');
+      setError(err.message || t('errors.unknownError'));
     }
     
     setIsLoading(false);
@@ -79,7 +81,7 @@ export const PasswordModal: React.FC<PasswordModalProps> = ({
             <div className="p-2 bg-red-100 rounded-lg">
               <Lock className="w-5 h-5 text-red-600" />
             </div>
-            <h3 className="text-xl font-bold text-gray-800">{title}</h3>
+            <h3 className="text-xl font-bold text-gray-800">{title || t('password.enterPassword')}</h3>
           </div>
           <button
             onClick={handleClose}
@@ -91,12 +93,12 @@ export const PasswordModal: React.FC<PasswordModalProps> = ({
 
         <div className="mb-4">
           <p className="text-sm text-gray-600 mb-4">
-            Access to Table Management requires administrator privileges. Please enter the password to continue.
+            {t('password.accessRequired')}
           </p>
           
           <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-4">
             <p className="text-xs text-blue-700">
-              <strong>Default Password:</strong> admin123 (stored in database)
+              <strong>{t('password.defaultPassword')}:</strong> {t('password.storedInDatabase')}
             </p>
           </div>
         </div>
@@ -104,7 +106,7 @@ export const PasswordModal: React.FC<PasswordModalProps> = ({
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              Administrator Password
+              {t('password.administratorPassword')}
             </label>
             <div className="relative">
               <input
@@ -112,7 +114,7 @@ export const PasswordModal: React.FC<PasswordModalProps> = ({
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 className="w-full px-3 py-2 pr-10 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                placeholder="Enter password"
+                placeholder={t('password.enterPasswordPlaceholder')}
                 required
                 autoFocus
               />
@@ -138,7 +140,7 @@ export const PasswordModal: React.FC<PasswordModalProps> = ({
               onClick={handleClose}
               className="px-4 py-2 text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
             >
-              Cancel
+              {t('actions.cancel')}
             </button>
             <button
               type="submit"
@@ -148,12 +150,12 @@ export const PasswordModal: React.FC<PasswordModalProps> = ({
               {isLoading ? (
                 <>
                   <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                  Verifying...
+                  {t('password.verifying')}
                 </>
               ) : (
                 <>
                   <Lock size={16} />
-                  Access
+                  {t('password.access')}
                 </>
               )}
             </button>

@@ -68,6 +68,12 @@ export const ReservationList: React.FC<ReservationListProps> = ({
     }
   };
 
+  const handleDeleteClick = (id: string, customerName: string) => {
+    if (confirm(t('messages.reservationDeleted') + ` - ${customerName}?`)) {
+      onDelete(id);
+    }
+  };
+
   return (
     <div className="bg-white rounded-xl shadow-sm border border-gray-200">
       {/* Header */}
@@ -75,13 +81,13 @@ export const ReservationList: React.FC<ReservationListProps> = ({
         <div className="flex flex-col sm:flex-row gap-4">
           {/* Search */}
           <div className="relative flex-1">
-            <Search size={20} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+            <Search size={20} className={`absolute ${isRTL ? 'right-3' : 'left-3'} top-1/2 transform -translate-y-1/2 text-gray-400`} />
             <input
               type="text"
               placeholder={t('reservation.searchReservations')}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              className={`w-full ${isRTL ? 'pr-10 pl-4' : 'pl-10 pr-4'} py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500`}
               dir={isRTL ? 'rtl' : 'ltr'}
             />
           </div>
@@ -93,7 +99,7 @@ export const ReservationList: React.FC<ReservationListProps> = ({
               onChange={(e) => setStatusFilter(e.target.value)}
               className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
             >
-              <option value="all">All Status</option>
+              <option value="all">{t('status.allStatus')}</option>
               <option value="confirmed">{t('status.confirmed')}</option>
               <option value="seated">{t('status.seated')}</option>
               <option value="completed">{t('status.completed')}</option>
@@ -106,7 +112,7 @@ export const ReservationList: React.FC<ReservationListProps> = ({
               onChange={(e) => setDateFilter(e.target.value)}
               className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
             >
-              <option value="all">All Dates</option>
+              <option value="all">{t('status.allDates')}</option>
               <option value="today">{t('time.today')}</option>
               <option value="tomorrow">{t('time.tomorrow')}</option>
             </select>
@@ -119,8 +125,8 @@ export const ReservationList: React.FC<ReservationListProps> = ({
         {filteredReservations.length === 0 ? (
           <div className="p-8 text-center text-gray-500">
             <Calendar size={48} className="mx-auto mb-4 text-gray-300" />
-            <p className="text-lg font-medium">No reservations found</p>
-            <p className="text-sm">Try adjusting your search or filters</p>
+            <p className="text-lg font-medium">{t('reservation.noReservationsFound')}</p>
+            <p className="text-sm">{t('reservation.adjustFilters')}</p>
           </div>
         ) : (
           filteredReservations.map((reservation) => (
@@ -143,7 +149,7 @@ export const ReservationList: React.FC<ReservationListProps> = ({
                     </div>
                     <div className="flex items-center gap-2">
                       <Users size={16} />
-                      <span>{reservation.partySize} people</span>
+                      <span>{reservation.partySize} {reservation.partySize === 1 ? t('forms.person') : t('forms.people')}</span>
                     </div>
                     <div className="flex items-center gap-2">
                       <Calendar size={16} />
@@ -158,18 +164,18 @@ export const ReservationList: React.FC<ReservationListProps> = ({
                   <div className="flex items-center gap-2 mt-2 text-sm text-gray-600">
                     <MapPin size={16} />
                     <span>
-                      Tables: {reservation.tableIds.join(', ')}
+                      {t('table.selectTables')}: {reservation.tableIds.join(', ')}
                     </span>
                   </div>
 
                   {reservation.specialRequests && (
                     <div className="mt-2 p-2 bg-blue-50 rounded text-sm text-blue-700">
-                      <strong>Special requests:</strong> {reservation.specialRequests}
+                      <strong>{t('reservation.specialRequests')}:</strong> {reservation.specialRequests}
                     </div>
                   )}
                 </div>
 
-                <div className="flex items-center gap-2 ml-4">
+                <div className={`flex items-center gap-2 ${isRTL ? 'mr-4' : 'ml-4'}`}>
                   {reservation.status === 'confirmed' && (
                     <select
                       value={reservation.status}
@@ -192,7 +198,7 @@ export const ReservationList: React.FC<ReservationListProps> = ({
                   </button>
                   
                   <button
-                    onClick={() => onDelete(reservation.id)}
+                    onClick={() => handleDeleteClick(reservation.id, reservation.customer.name)}
                     className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
                     title={t('actions.delete')}
                   >

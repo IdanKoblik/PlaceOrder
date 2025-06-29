@@ -33,7 +33,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ reservations, tables }) =>
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-600 mb-1">Today's Reservations</p>
+              <p className="text-sm text-gray-600 mb-1">{t('dashboard.todaysReservations')}</p>
               <p className="text-3xl font-bold text-gray-900">{stats.totalReservations}</p>
             </div>
             <div className="p-3 bg-blue-100 rounded-lg">
@@ -45,7 +45,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ reservations, tables }) =>
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-600 mb-1">Total Guests</p>
+              <p className="text-sm text-gray-600 mb-1">{t('dashboard.totalGuests')}</p>
               <p className="text-3xl font-bold text-gray-900">{stats.totalGuests}</p>
             </div>
             <div className="p-3 bg-green-100 rounded-lg">
@@ -57,7 +57,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ reservations, tables }) =>
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-600 mb-1">Confirmed</p>
+              <p className="text-sm text-gray-600 mb-1">{t('dashboard.confirmedReservations')}</p>
               <p className="text-3xl font-bold text-gray-900">{stats.confirmedReservations}</p>
             </div>
             <div className="p-3 bg-amber-100 rounded-lg">
@@ -69,7 +69,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ reservations, tables }) =>
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-600 mb-1">Occupied Tables</p>
+              <p className="text-sm text-gray-600 mb-1">{t('dashboard.occupiedTables')}</p>
               <p className="text-3xl font-bold text-gray-900">{stats.occupiedTables}</p>
             </div>
             <div className="p-3 bg-red-100 rounded-lg">
@@ -82,17 +82,17 @@ export const Dashboard: React.FC<DashboardProps> = ({ reservations, tables }) =>
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Upcoming Reservations */}
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-          <h3 className="text-lg font-semibold text-gray-800 mb-4">Upcoming Reservations</h3>
+          <h3 className="text-lg font-semibold text-gray-800 mb-4">{t('dashboard.upcomingReservations')}</h3>
           <div className="space-y-3">
             {upcomingReservations.length === 0 ? (
-              <p className="text-gray-500 text-center py-4">No upcoming reservations</p>
+              <p className="text-gray-500 text-center py-4">{t('dashboard.noUpcomingReservations')}</p>
             ) : (
               upcomingReservations.map((reservation) => (
                 <div key={reservation.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
                   <div>
                     <p className="font-medium text-gray-900">{reservation.customer.name}</p>
                     <p className="text-sm text-gray-600">
-                      {reservation.partySize} guests • {reservation.startTime}
+                      {reservation.partySize} {t('dashboard.guests')} • {reservation.startTime}
                     </p>
                   </div>
                   <div className="text-right">

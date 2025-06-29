@@ -3,9 +3,11 @@ import { Users, Shield, CheckCircle, AlertCircle } from 'lucide-react';
 import { GoogleSignIn } from './GoogleSignIn';
 import { LanguageSwitch } from './LanguageSwitch';
 import { useAuth } from '../contexts/AuthContext';
+import { useLanguage } from '../contexts/LanguageContext';
 
 export const LoginPage: React.FC = () => {
   const { isLoading } = useAuth();
+  const { t } = useLanguage();
   const [error, setError] = useState<string>('');
 
   const handleSignInSuccess = () => {
@@ -16,7 +18,7 @@ export const LoginPage: React.FC = () => {
 
   const handleSignInError = (error: Error) => {
     console.error('Sign-in error:', error);
-    setError(error.message || 'Sign-in failed. Please try again.');
+    setError(error.message || t('auth.authenticationFailed'));
   };
 
   return (
@@ -30,7 +32,7 @@ export const LoginPage: React.FC = () => {
             </div>
           </div>
           <h1 className="text-3xl font-bold text-gray-900 mb-2">ReserveFlow</h1>
-          <p className="text-gray-600">Restaurant Reservation Management System</p>
+          <p className="text-gray-600">{t('nav.reservations')} Management System</p>
         </div>
 
         {/* Login Card */}
@@ -38,10 +40,10 @@ export const LoginPage: React.FC = () => {
           <div className="text-center mb-6">
             <div className="flex items-center justify-center gap-2 mb-3">
               <Shield className="w-5 h-5 text-blue-600" />
-              <h2 className="text-xl font-semibold text-gray-800">Sign In Required</h2>
+              <h2 className="text-xl font-semibold text-gray-800">{t('auth.signInRequired')}</h2>
             </div>
             <p className="text-gray-600 text-sm">
-              Please sign in with your Google account to access the reservation system.
+              {t('auth.pleaseSignIn')}
             </p>
           </div>
 
@@ -65,23 +67,23 @@ export const LoginPage: React.FC = () => {
 
           {/* Features */}
           <div className="border-t border-gray-100 pt-6">
-            <h3 className="text-sm font-medium text-gray-700 mb-3">What you can do:</h3>
+            <h3 className="text-sm font-medium text-gray-700 mb-3">{t('common.about')}:</h3>
             <div className="space-y-2">
               <div className="flex items-center gap-2 text-sm text-gray-600">
                 <CheckCircle className="w-4 h-4 text-green-500" />
-                <span>Manage restaurant reservations</span>
+                <span>{t('nav.reservations')}</span>
               </div>
               <div className="flex items-center gap-2 text-sm text-gray-600">
                 <CheckCircle className="w-4 h-4 text-green-500" />
-                <span>View dashboard and analytics</span>
+                <span>{t('nav.dashboard')}</span>
               </div>
               <div className="flex items-center gap-2 text-sm text-gray-600">
                 <CheckCircle className="w-4 h-4 text-green-500" />
-                <span>Track customer information</span>
+                <span>{t('nav.customers')}</span>
               </div>
               <div className="flex items-center gap-2 text-sm text-gray-600">
                 <Shield className="w-4 h-4 text-amber-500" />
-                <span>Table management (admin + password)</span>
+                <span>{t('nav.tableManagement')} ({t('auth.adminAccessRequired')})</span>
               </div>
             </div>
           </div>
@@ -89,8 +91,7 @@ export const LoginPage: React.FC = () => {
           {/* Security Note */}
           <div className="mt-6 p-3 bg-blue-50 rounded-lg border border-blue-200">
             <p className="text-xs text-blue-700">
-              <strong>Secure Authentication:</strong> We use Google OAuth for secure sign-in. 
-              Your credentials are never stored on our servers.
+              <strong>{t('auth.secureAuth')}:</strong> {t('auth.secureAuth')}
             </p>
           </div>
         </div>
@@ -102,7 +103,7 @@ export const LoginPage: React.FC = () => {
 
         {/* Footer */}
         <div className="text-center mt-8 text-sm text-gray-500">
-          <p>© 2024 ReserveFlow. Secure restaurant management.</p>
+          <p>{t('common.copyright')} 2024 ReserveFlow. {t('common.allRightsReserved')}.</p>
         </div>
       </div>
     </div>
