@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Search, Calendar, Clock, Users, Phone, Edit, Trash2, MapPin } from 'lucide-react';
 import { useLanguage } from '../contexts/LanguageContext';
-import type { Reservation } from '../types';
+import type { Reservation } from '../../../shared/types';
 
 interface ReservationListProps {
   reservations: Reservation[];

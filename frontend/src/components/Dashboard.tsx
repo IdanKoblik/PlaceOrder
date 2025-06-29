@@ -1,7 +1,7 @@
 import React from 'react';
 import { Calendar, Users, Clock, TrendingUp } from 'lucide-react';
 import { useLanguage } from '../contexts/LanguageContext';
-import type { Reservation, Table } from '../types';
+import type { Reservation, Table } from '../../../shared/types';
 
 interface DashboardProps {
   reservations: Reservation[];
@@ -25,30 +25,6 @@ export const Dashboard: React.FC<DashboardProps> = ({ reservations, tables }) =>
     .filter(r => r.status === 'confirmed')
     .sort((a, b) => a.startTime.localeCompare(b.startTime))
     .slice(0, 5);
-
-  const areaStats = {
-    bar: {
-      total: tables.filter(t => t.area === 'bar').length,
-      occupied: todayReservations.filter(r => 
-        r.status === 'seated' && 
-        r.tableIds.some(id => tables.find(t => t.id === id)?.area === 'bar')
-      ).length
-    },
-    inside: {
-      total: tables.filter(t => t.area === 'inside').length,
-      occupied: todayReservations.filter(r => 
-        r.status === 'seated' && 
-        r.tableIds.some(id => tables.find(t => t.id === id)?.area === 'inside')
-      ).length
-    },
-    outside: {
-      total: tables.filter(t => t.area === 'outside').length,
-      occupied: todayReservations.filter(r => 
-        r.status === 'seated' && 
-        r.tableIds.some(id => tables.find(t => t.id === id)?.area === 'outside')
-      ).length
-    }
-  };
 
   return (
     <div className="space-y-6">
@@ -104,32 +80,6 @@ export const Dashboard: React.FC<DashboardProps> = ({ reservations, tables }) =>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Area Occupancy */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-          <h3 className="text-lg font-semibold text-gray-800 mb-4">Area Occupancy</h3>
-          <div className="space-y-4">
-            {Object.entries(areaStats).map(([area, stats]) => {
-              const occupancyRate = stats.total > 0 ? (stats.occupied / stats.total) * 100 : 0;
-              return (
-                <div key={area}>
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="font-medium capitalize">{t(`areas.${area}`)}</span>
-                    <span className="text-sm text-gray-600">
-                      {stats.occupied}/{stats.total} ({occupancyRate.toFixed(0)}%)
-                    </span>
-                  </div>
-                  <div className="w-full bg-gray-200 rounded-full h-2">
-                    <div
-                      className="h-2 rounded-full bg-gradient-to-r from-blue-500 to-blue-600"
-                      style={{ width: `${occupancyRate}%` }}
-                    />
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-
         {/* Upcoming Reservations */}
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
           <h3 className="text-lg font-semibold text-gray-800 mb-4">Upcoming Reservations</h3>

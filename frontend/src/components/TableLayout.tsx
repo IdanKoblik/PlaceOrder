@@ -1,6 +1,6 @@
 import React from 'react';
 import { useLanguage } from '../contexts/LanguageContext';
-import type { Table } from '../types';
+import type { Table } from '../../../shared/types';
 
 interface TableLayoutProps {
   tables: Table[];

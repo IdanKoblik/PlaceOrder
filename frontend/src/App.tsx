@@ -6,9 +6,9 @@ import { Dashboard } from './components/Dashboard';
 import { ReservationList } from './components/ReservationList';
 import { ReservationForm } from './components/ReservationForm';
 import { useReservations } from './hooks/useReservations';
-import type { Reservation } from './types';
+import type { Reservation } from '../../shared/types';
 
-type ActiveView = 'dashboard' | 'reservations' | 'form';
+type ActiveView = 'dashboard' | 'reservations' | 'form' | 'tables';
 
 function AppContent() {
   const { t } = useLanguage();

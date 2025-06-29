@@ -1,5 +1,5 @@
-import { useState, useCallback, useMemo } from 'react';
-import type { Reservation, Customer, Table } from '../types';
+import { useState, useCallback, useMemo, useEffect } from 'react';
+import type { Reservation, Customer, Table } from '../../../shared/types';
 
 const mockTables: Table[] = [
   // Bar Area - Adjustable chairs
@@ -52,9 +52,45 @@ const mockReservations: Reservation[] = [
 ];
 
 export const useReservations = () => {
-  const [reservations, setReservations] = useState<Reservation[]>(mockReservations);
+  const [reservations, setReservations] = useState<Reservation[]>([]);
   const [tables] = useState<Table[]>(mockTables);
 
+  //http://0.0.0.0:3000/api/v1/reservations
+  useEffect(() => {
+    const fetchReservations = async () => {
+      try {
+        const res = await fetch("http://0.0.0.0:3000/api/v1/reservations", {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }); 
+        if (!res.ok) throw new Error(`Failed to fetch: ${res.statusText}`);
+        const data: Reservation[] = await res.json();
+        setReservations(data);
+      } catch (err) {
+        console.error("Error loading reservations:", err);
+      }
+    };
+
+    fetchReservations();
+  }, []);
+
+  const createReservationEndpoint = async (reservation: Reservation) => {
+    try {
+      const res = await fetch("http://0.0.0.0:3000/api/v1/reservations", {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(reservation),
+      });
+      if (!res.ok) throw new Error(`Failed to fetch: ${res.statusText}`);
+    } catch (err) {
+      console.error("Error creating reservation:", err);
+    }
+  }
+  
   const createReservation = useCallback((reservationData: Omit<Reservation, 'id' | 'createdAt' | 'updatedAt'>) => {
     const newReservation: Reservation = {
       ...reservationData,
@@ -63,19 +99,56 @@ export const useReservations = () => {
       updatedAt: new Date().toISOString()
     };
     
+    createReservationEndpoint(newReservation);
     setReservations(prev => [...prev, newReservation]);
     return newReservation;
   }, []);
 
-  const updateReservation = useCallback((id: string, updates: Partial<Reservation>) => {
+  const updateReservationEndpoint = async (reservation: Reservation) => {
+    try {
+      const res = await fetch("http://0.0.0.0:3000/api/v1/reservations", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(reservation),
+      });
+      if (!res.ok) throw new Error(`Failed to fetch: ${res.statusText}`);
+    } catch (err) {
+      console.error("Error creating reservation:", err);
+    }
+  }
+
+  const updateReservation = useCallback(async (id: string, updates: Partial<Reservation>) => {
     setReservations(prev => prev.map(reservation => 
       reservation.id === id 
         ? { ...reservation, ...updates, updatedAt: new Date().toISOString() }
         : reservation
     ));
-  }, []);
+  
+    const updatedReservation = reservations.find(r => r.id === id);
+    if (updatedReservation) {
+      const payload = { ...updatedReservation, ...updates, updatedAt: new Date().toISOString() };
+      await updateReservationEndpoint(payload);
+    }
+  }, [reservations]);
+
+  const deleteReservationEndpoint = async (id: string) => {
+    try {
+      const res = await fetch(`http://0.0.0.0:3000/api/v1/reservations?id=${id}`, {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+      if (!res.ok) throw new Error(`Failed to fetch: ${res.statusText}`);
+    } catch (err) {
+      console.error("Error creating reservation:", err);
+    }
+  }
 
   const deleteReservation = useCallback((id: string) => {
+    deleteReservationEndpoint(id);
     setReservations(prev => prev.filter(reservation => reservation.id !== id));
   }, []);
 

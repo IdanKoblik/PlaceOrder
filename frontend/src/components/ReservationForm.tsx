@@ -3,7 +3,7 @@ import { Calendar, Clock, Users, Phone, User, MessageSquare, Save, X } from 'luc
 import { useLanguage } from '../contexts/LanguageContext';
 import { useReservations } from '../hooks/useReservations';
 import { TableLayout } from './TableLayout';
-import type { Reservation, Customer } from '../types';
+import type { Reservation } from '../../../shared/types';
 
 interface ReservationFormProps {
   reservation?: Reservation;

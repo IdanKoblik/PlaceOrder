@@ -1,7 +1,7 @@
 import React from 'react';
 import { Languages } from 'lucide-react';
 import { useLanguage } from '../contexts/LanguageContext';
-import type { Language } from '../types';
+import type { Language } from '../../../shared/types';
 
 const languages: { code: Language; name: string; flag: string }[] = [
   { code: 'en', name: 'English', flag: '🇺🇸' },
