@@ -1,20 +1,22 @@
 import React, { useState } from 'react';
-import { Calendar, Users, LayoutGrid, BarChart3, Plus, Settings } from 'lucide-react';
+import { Calendar, Users, LayoutGrid, BarChart3, Plus, Settings, Clock } from 'lucide-react';
 import { LanguageProvider, useLanguage } from './contexts/LanguageContext';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { LanguageSwitch } from './components/LanguageSwitch';
 import { UserProfile } from './components/UserProfile';
 import { LoginPage } from './components/LoginPage';
 import { PasswordModal } from './components/PasswordModal';
+import { ConfigManagement } from './components/ConfigManagement';
 import { Dashboard } from './components/Dashboard';
 import { ReservationList } from './components/ReservationList';
 import { ReservationForm } from './components/ReservationForm';
 import { TableManagement } from './components/TableManagement';
 import { useReservations } from './hooks/useReservations';
 import { useTables } from './hooks/useTables';
+import { useConfig } from './hooks/useConfig';
 import type { Reservation } from '../../shared/types';
 
-type ActiveView = 'dashboard' | 'reservations' | 'form' | 'tables';
+type ActiveView = 'dashboard' | 'reservations' | 'form' | 'tables' | 'config';
 
 function AppContent() {
   const { t } = useLanguage();
@@ -27,16 +29,19 @@ function AppContent() {
   } = useReservations();
   
   const { tables, updateTables, isLoading: tablesLoading } = useTables();
+  const { config } = useConfig();
 
   const [activeView, setActiveView] = useState<ActiveView>('dashboard');
   const [editingReservation, setEditingReservation] = useState<Reservation | undefined>();
   const [showPasswordModal, setShowPasswordModal] = useState(false);
   const [isTableManagementUnlocked, setIsTableManagementUnlocked] = useState(false);
+  const [showConfigModal, setShowConfigModal] = useState(false);
 
   const navigation = [
     { id: 'dashboard', label: t('nav.dashboard'), icon: LayoutGrid },
     { id: 'reservations', label: t('nav.reservations'), icon: Calendar },
     { id: 'tables', label: 'Table Management', icon: Settings },
+    { id: 'config', label: 'Working Hours', icon: Clock },
   ];
 
   // Show loading screen while checking authentication
@@ -98,6 +103,10 @@ function AppContent() {
         setShowPasswordModal(true);
         return;
       }
+    } else if (viewId === 'config') {
+      // For config management, show modal
+      setShowConfigModal(true);
+      return;
     }
     setActiveView(viewId as ActiveView);
   };
@@ -119,7 +128,10 @@ function AppContent() {
                 <div className="p-2 bg-blue-600 rounded-lg">
                   <Users className="w-6 h-6 text-white" />
                 </div>
-                <h1 className="text-xl font-bold text-gray-900">ReserveFlow</h1>
+                <div>
+                  <h1 className="text-xl font-bold text-gray-900">ReserveFlow</h1>
+                  <p className="text-xs text-gray-500">{config.name}</p>
+                </div>
               </div>
 
               <nav className="hidden md:flex space-x-8">
@@ -202,7 +214,7 @@ function AppContent() {
 
       {/* Mobile Navigation */}
       <div className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200">
-        <div className="grid grid-cols-3 gap-1">
+        <div className="grid grid-cols-4 gap-1">
           {navigation.map((item) => {
             const Icon = item.icon;
             const isLocked = item.id === 'tables' && !isTableManagementUnlocked;
@@ -235,6 +247,13 @@ function AppContent() {
         onSuccess={handlePasswordSuccess}
         title="Table Management Access"
       />
+
+      {/* Config Management Modal */}
+      {showConfigModal && (
+        <ConfigManagement
+          onClose={() => setShowConfigModal(false)}
+        />
+      )}
     </div>
   );
 }

@@ -102,6 +102,88 @@ const initializeDatabase = () => {
       }
     });
   });
+
+  // Create restaurant_config table for working hours and settings
+  db.run(`
+    CREATE TABLE IF NOT EXISTS restaurant_config (
+      id TEXT PRIMARY KEY,
+      name TEXT NOT NULL,
+      monday_is_open INTEGER NOT NULL DEFAULT 1,
+      monday_open_time TEXT NOT NULL DEFAULT '09:00',
+      monday_close_time TEXT NOT NULL DEFAULT '22:00',
+      tuesday_is_open INTEGER NOT NULL DEFAULT 1,
+      tuesday_open_time TEXT NOT NULL DEFAULT '09:00',
+      tuesday_close_time TEXT NOT NULL DEFAULT '22:00',
+      wednesday_is_open INTEGER NOT NULL DEFAULT 1,
+      wednesday_open_time TEXT NOT NULL DEFAULT '09:00',
+      wednesday_close_time TEXT NOT NULL DEFAULT '22:00',
+      thursday_is_open INTEGER NOT NULL DEFAULT 1,
+      thursday_open_time TEXT NOT NULL DEFAULT '09:00',
+      thursday_close_time TEXT NOT NULL DEFAULT '22:00',
+      friday_is_open INTEGER NOT NULL DEFAULT 1,
+      friday_open_time TEXT NOT NULL DEFAULT '09:00',
+      friday_close_time TEXT NOT NULL DEFAULT '22:00',
+      saturday_is_open INTEGER NOT NULL DEFAULT 1,
+      saturday_open_time TEXT NOT NULL DEFAULT '09:00',
+      saturday_close_time TEXT NOT NULL DEFAULT '23:00',
+      sunday_is_open INTEGER NOT NULL DEFAULT 1,
+      sunday_open_time TEXT NOT NULL DEFAULT '10:00',
+      sunday_close_time TEXT NOT NULL DEFAULT '21:00',
+      time_slot_duration INTEGER NOT NULL DEFAULT 30,
+      reservation_duration INTEGER NOT NULL DEFAULT 120,
+      advance_booking_days INTEGER NOT NULL DEFAULT 30,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    )
+  `, (err) => {
+    if (err) {
+      console.error('Error creating restaurant_config table:', err);
+      return;
+    }
+
+    // Insert default restaurant config if table is empty
+    db.get('SELECT COUNT(*) as count FROM restaurant_config', (err, row: any) => {
+      if (err) {
+        console.error('Error checking restaurant_config:', err);
+        return;
+      }
+
+      if (row.count === 0) {
+        db.run(
+          `INSERT INTO restaurant_config (
+            id, name, 
+            monday_is_open, monday_open_time, monday_close_time,
+            tuesday_is_open, tuesday_open_time, tuesday_close_time,
+            wednesday_is_open, wednesday_open_time, wednesday_close_time,
+            thursday_is_open, thursday_open_time, thursday_close_time,
+            friday_is_open, friday_open_time, friday_close_time,
+            saturday_is_open, saturday_open_time, saturday_close_time,
+            sunday_is_open, sunday_open_time, sunday_close_time,
+            time_slot_duration, reservation_duration, advance_booking_days
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+          [
+            'default',
+            'ReserveFlow Restaurant',
+            1, '09:00', '22:00', // Monday
+            1, '09:00', '22:00', // Tuesday
+            1, '09:00', '22:00', // Wednesday
+            1, '09:00', '22:00', // Thursday
+            1, '09:00', '23:00', // Friday
+            1, '09:00', '23:00', // Saturday
+            1, '10:00', '21:00', // Sunday
+            30, 120, 30 // time slot duration, reservation duration, advance booking days
+          ],
+          (err) => {
+            if (err) {
+              console.error('Error inserting default restaurant config:', err);
+            } else {
+              console.log('Default restaurant configuration created');
+            }
+          }
+        );
+      }
+    });
+  });
 };
 
 // Initialize the database when this module is loaded

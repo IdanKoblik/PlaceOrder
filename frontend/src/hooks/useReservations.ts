@@ -1,5 +1,6 @@
 import { useState, useCallback, useMemo, useEffect } from 'react';
 import { buildApiUrl, API_ENDPOINTS } from '../config/api';
+import { useConfig } from './useConfig';
 import type { Reservation, Customer, Table } from '../../../shared/types';
 
 const mockReservations: Reservation[] = [
@@ -31,6 +32,7 @@ const mockReservations: Reservation[] = [
 
 export const useReservations = () => {
   const [reservations, setReservations] = useState<Reservation[]>([]);
+  const { generateTimeSlots, getReservationEndTime, isDateAvailable } = useConfig();
 
   useEffect(() => {
     const fetchReservations = async () => {
@@ -129,6 +131,11 @@ export const useReservations = () => {
   }, []);
 
   const getAvailableTables = useCallback((date: string, startTime: string, endTime: string, partySize: number, tables: Table[] = []) => {
+    // Check if the date is available (restaurant is open)
+    if (!isDateAvailable(date)) {
+      return [];
+    }
+
     const conflictingReservations = reservations.filter(reservation => 
       reservation.date === date &&
       reservation.status !== 'cancelled' &&
@@ -145,7 +152,7 @@ export const useReservations = () => {
       table.capacity.min <= partySize &&
       table.capacity.max >= partySize
     );
-  }, [reservations]);
+  }, [reservations, isDateAvailable]);
 
   const getTableStatus = useCallback((tableId: string, date: string, time: string) => {
     const currentReservation = reservations.find(reservation =>
@@ -167,17 +174,6 @@ export const useReservations = () => {
         return 'available';
     }
   }, [reservations]);
-
-  const generateTimeSlots = useCallback(() => {
-    const slots = [];
-    for (let hour = 12; hour <= 23; hour++) {
-      for (let minute = 0; minute < 60; minute += 30) {
-        const timeString = `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
-        slots.push(timeString);
-      }
-    }
-    return slots;
-  }, []);
 
   const searchReservations = useCallback((query: string) => {
     if (!query.trim()) return reservations;
@@ -202,6 +198,8 @@ export const useReservations = () => {
     getAvailableTables,
     getTableStatus,
     generateTimeSlots,
+    getReservationEndTime,
+    isDateAvailable,
     searchReservations,
     getReservationsByDate
   };

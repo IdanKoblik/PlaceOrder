@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { Calendar, Clock, Users, Phone, User, MessageSquare, Save, X } from 'lucide-react';
+import { Calendar, Clock, Users, Phone, User, MessageSquare, Save, X, AlertCircle } from 'lucide-react';
 import { useLanguage } from '../contexts/LanguageContext';
 import { useReservations } from '../hooks/useReservations';
+import { useConfig } from '../hooks/useConfig';
 import { TableLayout } from './TableLayout';
 import type { Reservation, Table } from '../../../shared/types';
 
@@ -19,7 +20,8 @@ export const ReservationForm: React.FC<ReservationFormProps> = ({
   tables
 }) => {
   const { t, isRTL } = useLanguage();
-  const { getAvailableTables, getTableStatus, generateTimeSlots } = useReservations();
+  const { getAvailableTables, getTableStatus } = useReservations();
+  const { generateTimeSlots, getReservationEndTime, isDateAvailable, getWorkingHoursForDate } = useConfig();
 
   const [formData, setFormData] = useState({
     customer: {
@@ -38,28 +40,36 @@ export const ReservationForm: React.FC<ReservationFormProps> = ({
   const [selectedArea, setSelectedArea] = useState<'bar' | 'inside' | 'outside'>('inside');
   const [selectedTables, setSelectedTables] = useState<string[]>(reservation?.tableIds || []);
   const [availableTables, setAvailableTables] = useState(tables);
+  const [dateError, setDateError] = useState<string>('');
 
-  const timeSlots = generateTimeSlots();
-  const endTime = calculateEndTime(formData.startTime);
-
-  function calculateEndTime(startTime: string): string {
-    const [hours, minutes] = startTime.split(':').map(Number);
-    const endHours = hours + 2;
-    return `${endHours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
-  }
+  const timeSlots = generateTimeSlots(formData.date);
+  const endTime = getReservationEndTime(formData.startTime);
+  const workingHours = getWorkingHoursForDate(formData.date);
 
   useEffect(() => {
+    // Check if selected date is available
+    if (!isDateAvailable(formData.date)) {
+      const dayName = new Date(formData.date).toLocaleDateString('en-US', { weekday: 'long' });
+      if (!workingHours.isOpen) {
+        setDateError(`Restaurant is closed on ${dayName}`);
+      } else {
+        setDateError('Selected date is not available for booking');
+      }
+    } else {
+      setDateError('');
+    }
+
     const available = getAvailableTables(
       formData.date,
       formData.startTime,
       endTime,
       formData.partySize,
-      tables // Pass tables array here
+      tables
     );
     setAvailableTables(available);
     
     setSelectedTables(prev => prev.filter(id => available.some(table => table.id === id)));
-  }, [formData.date, formData.startTime, formData.partySize, getAvailableTables, endTime, tables]);
+  }, [formData.date, formData.startTime, formData.partySize, getAvailableTables, endTime, tables, isDateAvailable, workingHours]);
 
   const handleInputChange = (field: string, value: any) => {
     if (field.startsWith('customer.')) {
@@ -90,6 +100,10 @@ export const ReservationForm: React.FC<ReservationFormProps> = ({
       return;
     }
 
+    if (!isDateAvailable(formData.date)) {
+      return;
+    }
+
     const reservationData = {
       customer: {
         id: reservation?.customer.id || Date.now().toString(),
@@ -112,6 +126,16 @@ export const ReservationForm: React.FC<ReservationFormProps> = ({
       const table = tables.find(t => t.id === tableId);
       return total + (table?.capacity.max || 0);
     }, 0);
+  };
+
+  const getMinDate = () => {
+    return new Date().toISOString().split('T')[0];
+  };
+
+  const getMaxDate = () => {
+    const maxDate = new Date();
+    maxDate.setDate(maxDate.getDate() + 90); // 3 months ahead
+    return maxDate.toISOString().split('T')[0];
   };
 
   return (
@@ -185,10 +209,24 @@ export const ReservationForm: React.FC<ReservationFormProps> = ({
               type="date"
               value={formData.date}
               onChange={(e) => handleInputChange('date', e.target.value)}
-              min={new Date().toISOString().split('T')[0]}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              min={getMinDate()}
+              max={getMaxDate()}
+              className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+                dateError ? 'border-red-300 bg-red-50' : 'border-gray-300'
+              }`}
               required
             />
+            {dateError && (
+              <div className="mt-1 flex items-center gap-1 text-sm text-red-600">
+                <AlertCircle size={14} />
+                <span>{dateError}</span>
+              </div>
+            )}
+            {workingHours.isOpen && !dateError && (
+              <div className="mt-1 text-xs text-gray-500">
+                Open: {workingHours.openTime} - {workingHours.closeTime}
+              </div>
+            )}
           </div>
 
           <div>
@@ -200,13 +238,23 @@ export const ReservationForm: React.FC<ReservationFormProps> = ({
               value={formData.startTime}
               onChange={(e) => handleInputChange('startTime', e.target.value)}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              disabled={timeSlots.length === 0}
             >
-              {timeSlots.map(time => (
-                <option key={time} value={time}>
-                  {time} - {calculateEndTime(time)} (2 {t('time.hours')})
-                </option>
-              ))}
+              {timeSlots.length === 0 ? (
+                <option value="">No available times</option>
+              ) : (
+                timeSlots.map(time => (
+                  <option key={time} value={time}>
+                    {time} - {getReservationEndTime(time)}
+                  </option>
+                ))
+              )}
             </select>
+            {timeSlots.length === 0 && workingHours.isOpen && (
+              <div className="mt-1 text-xs text-amber-600">
+                No available time slots for this date
+              </div>
+            )}
           </div>
 
           <div>
@@ -224,60 +272,64 @@ export const ReservationForm: React.FC<ReservationFormProps> = ({
           </div>
         </div>
 
-        {/* Area Selection */}
-        <div>
-          <h3 className="text-lg font-semibold text-gray-800 mb-3">Select Seating Area</h3>
-          <div className="flex gap-2 mb-4">
-            {(['bar', 'inside', 'outside'] as const).map(area => (
-              <button
-                key={area}
-                type="button"
-                onClick={() => setSelectedArea(area)}
-                className={`px-4 py-2 rounded-lg font-medium transition-colors ${
-                  selectedArea === area
-                    ? 'bg-blue-600 text-white'
-                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                }`}
-              >
-                {t(`areas.${area}`)}
-              </button>
-            ))}
-          </div>
+        {/* Area Selection - Only show if date is available */}
+        {!dateError && timeSlots.length > 0 && (
+          <>
+            <div>
+              <h3 className="text-lg font-semibold text-gray-800 mb-3">Select Seating Area</h3>
+              <div className="flex gap-2 mb-4">
+                {(['bar', 'inside', 'outside'] as const).map(area => (
+                  <button
+                    key={area}
+                    type="button"
+                    onClick={() => setSelectedArea(area)}
+                    className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+                      selectedArea === area
+                        ? 'bg-blue-600 text-white'
+                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                    }`}
+                  >
+                    {t(`areas.${area}`)}
+                  </button>
+                ))}
+              </div>
 
-          <TableLayout
-            tables={availableTables}
-            selectedArea={selectedArea}
-            selectedTables={selectedTables}
-            onTableSelect={handleTableSelect}
-            getTableStatus={(tableId) => getTableStatus(tableId, formData.date, formData.startTime)}
-            date={formData.date}
-            time={formData.startTime}
-          />
-        </div>
-
-        {/* Summary */}
-        {selectedTables.length > 0 && (
-          <div className="bg-gray-50 rounded-lg p-4">
-            <h4 className="font-semibold text-gray-800 mb-2">Reservation Summary</h4>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
-              <div>
-                <span className="text-gray-600">Party Size:</span>
-                <span className="font-medium ml-2">{formData.partySize}</span>
-              </div>
-              <div>
-                <span className="text-gray-600">Total Capacity:</span>
-                <span className="font-medium ml-2">{getTotalCapacity()}</span>
-              </div>
-              <div>
-                <span className="text-gray-600">Duration:</span>
-                <span className="font-medium ml-2">2 {t('time.hours')}</span>
-              </div>
-              <div>
-                <span className="text-gray-600">Tables:</span>
-                <span className="font-medium ml-2">{selectedTables.length}</span>
-              </div>
+              <TableLayout
+                tables={availableTables}
+                selectedArea={selectedArea}
+                selectedTables={selectedTables}
+                onTableSelect={handleTableSelect}
+                getTableStatus={(tableId) => getTableStatus(tableId, formData.date, formData.startTime)}
+                date={formData.date}
+                time={formData.startTime}
+              />
             </div>
-          </div>
+
+            {/* Summary */}
+            {selectedTables.length > 0 && (
+              <div className="bg-gray-50 rounded-lg p-4">
+                <h4 className="font-semibold text-gray-800 mb-2">Reservation Summary</h4>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                  <div>
+                    <span className="text-gray-600">Party Size:</span>
+                    <span className="font-medium ml-2">{formData.partySize}</span>
+                  </div>
+                  <div>
+                    <span className="text-gray-600">Total Capacity:</span>
+                    <span className="font-medium ml-2">{getTotalCapacity()}</span>
+                  </div>
+                  <div>
+                    <span className="text-gray-600">Duration:</span>
+                    <span className="font-medium ml-2">{getReservationEndTime(formData.startTime)} - {endTime}</span>
+                  </div>
+                  <div>
+                    <span className="text-gray-600">Tables:</span>
+                    <span className="font-medium ml-2">{selectedTables.length}</span>
+                  </div>
+                </div>
+              </div>
+            )}
+          </>
         )}
 
         {/* Actions */}
@@ -291,7 +343,13 @@ export const ReservationForm: React.FC<ReservationFormProps> = ({
           </button>
           <button
             type="submit"
-            disabled={!formData.customer.name.trim() || !formData.customer.phone.trim() || selectedTables.length === 0}
+            disabled={
+              !formData.customer.name.trim() || 
+              !formData.customer.phone.trim() || 
+              selectedTables.length === 0 ||
+              !!dateError ||
+              timeSlots.length === 0
+            }
             className="flex items-center gap-2 px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors"
           >
             <Save size={16} />

@@ -1,13 +1,13 @@
 // API Configuration
 export const API_CONFIG = {
   // Backend base URL - adjust this to match your backend server
-  BASE_URL: 'http://localhost:3000',
+  BASE_URL: import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000',
   
   // API version prefix
-  API_PREFIX: '/api/v1',
+  API_PREFIX: import.meta.env.VITE_API_PREFIX || '/api/v1',
   
   // Request timeout in milliseconds
-  TIMEOUT: 10000,
+  TIMEOUT: parseInt(import.meta.env.VITE_API_TIMEOUT || '10000'),
   
   // Default headers for all requests
   DEFAULT_HEADERS: {
@@ -26,6 +26,7 @@ export const buildApiUrl = (endpoint: string): string => {
 export const API_ENDPOINTS = {
   RESERVATIONS: 'reservations',
   TABLES: 'tables',
+  CONFIG: 'config',
   VERIFY_PASSWORD: 'verify-password',
 } as const;
 
@@ -38,14 +39,14 @@ export const getApiConfig = () => {
   if (isDevelopment) {
     return {
       ...API_CONFIG,
-      BASE_URL: 'http://localhost:3000', // Development server
+      BASE_URL: import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000', // Development server
     };
   }
   
   if (isProduction) {
     return {
       ...API_CONFIG,
-      BASE_URL: window.location.origin, // Use same origin in production
+      BASE_URL: import.meta.env.VITE_API_BASE_URL || window.location.origin, // Use same origin in production
     };
   }
   
