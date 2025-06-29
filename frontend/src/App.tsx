@@ -21,7 +21,7 @@ function AppContent() {
     deleteReservation 
   } = useReservations();
   
-  const { tables, updateTables } = useTables();
+  const { tables, updateTables, isLoading } = useTables();
 
   const [activeView, setActiveView] = useState<ActiveView>('dashboard');
   const [editingReservation, setEditingReservation] = useState<Reservation | undefined>();
@@ -146,6 +146,7 @@ function AppContent() {
           <TableManagement
             tables={tables}
             onUpdateTables={updateTables}
+            isLoading={isLoading}
           />
         )}
       </main>

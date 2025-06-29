@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import type { Table } from '../../../shared/types';
 
 const initialTables: Table[] = [
@@ -25,33 +25,86 @@ const initialTables: Table[] = [
 ];
 
 export const useTables = () => {
-  const [tables, setTables] = useState<Table[]>(() => {
-    // Try to load from localStorage first
-    const saved = localStorage.getItem('restaurant-tables');
-    return saved ? JSON.parse(saved) : initialTables;
-  });
+  const [tables, setTables] = useState<Table[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
-  const updateTables = useCallback((newTables: Table[]) => {
-    setTables(newTables);
-    // Save to localStorage
-    localStorage.setItem('restaurant-tables', JSON.stringify(newTables));
+  // Load tables from database on mount
+  useEffect(() => {
+    const fetchTables = async () => {
+      try {
+        const response = await fetch("http://localhost:3000/api/v1/tables");
+        if (!response.ok) {
+          throw new Error(`Failed to fetch: ${response.statusText}`);
+        }
+        const data: Table[] = await response.json();
+        
+        // If no tables in database, use initial tables
+        if (data.length === 0) {
+          setTables(initialTables);
+          // Save initial tables to database
+          await saveTablesEndpoint(initialTables);
+        } else {
+          setTables(data);
+        }
+      } catch (err) {
+        console.error("Error loading tables:", err);
+        // Fallback to initial tables if database fails
+        setTables(initialTables);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchTables();
   }, []);
 
-  const addTable = useCallback((table: Table) => {
+  const saveTablesEndpoint = async (tablesToSave: Table[]) => {
+    try {
+      const response = await fetch("http://localhost:3000/api/v1/tables", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(tablesToSave),
+      });
+      
+      if (!response.ok) {
+        throw new Error(`Failed to save: ${response.statusText}`);
+      }
+      
+      return await response.json();
+    } catch (err) {
+      console.error("Error saving tables:", err);
+      throw err;
+    }
+  };
+
+  const updateTables = useCallback(async (newTables: Table[]) => {
+    setTables(newTables);
+    
+    try {
+      await saveTablesEndpoint(newTables);
+    } catch (err) {
+      console.error("Failed to save tables to database:", err);
+      // Optionally show user notification about save failure
+    }
+  }, []);
+
+  const addTable = useCallback(async (table: Table) => {
     const newTables = [...tables, table];
-    updateTables(newTables);
+    await updateTables(newTables);
   }, [tables, updateTables]);
 
-  const updateTable = useCallback((tableId: string, updates: Partial<Table>) => {
+  const updateTable = useCallback(async (tableId: string, updates: Partial<Table>) => {
     const newTables = tables.map(table =>
       table.id === tableId ? { ...table, ...updates } : table
     );
-    updateTables(newTables);
+    await updateTables(newTables);
   }, [tables, updateTables]);
 
-  const deleteTable = useCallback((tableId: string) => {
+  const deleteTable = useCallback(async (tableId: string) => {
     const newTables = tables.filter(table => table.id !== tableId);
-    updateTables(newTables);
+    await updateTables(newTables);
   }, [tables, updateTables]);
 
   const getTablesByArea = useCallback((area: 'bar' | 'inside' | 'outside') => {
@@ -62,8 +115,8 @@ export const useTables = () => {
     return tables.filter(table => table.area === area && table.isActive);
   }, [tables]);
 
-  const resetTables = useCallback(() => {
-    updateTables(initialTables);
+  const resetTables = useCallback(async () => {
+    await updateTables(initialTables);
   }, [updateTables]);
 
   return {
@@ -74,6 +127,7 @@ export const useTables = () => {
     deleteTable,
     getTablesByArea,
     getActiveTablesByArea,
-    resetTables
+    resetTables,
+    isLoading
   };
 };
