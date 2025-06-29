@@ -65,6 +65,43 @@ const initializeDatabase = () => {
       PRIMARY KEY (reservation_id, table_id)
     )
   `);
+
+  // Create admin_settings table for storing admin password
+  db.run(`
+    CREATE TABLE IF NOT EXISTS admin_settings (
+      id INTEGER PRIMARY KEY,
+      password TEXT NOT NULL,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    )
+  `, (err) => {
+    if (err) {
+      console.error('Error creating admin_settings table:', err);
+      return;
+    }
+
+    // Insert default admin password if table is empty
+    db.get('SELECT COUNT(*) as count FROM admin_settings', (err, row: any) => {
+      if (err) {
+        console.error('Error checking admin_settings:', err);
+        return;
+      }
+
+      if (row.count === 0) {
+        db.run(
+          'INSERT INTO admin_settings (password) VALUES (?)',
+          ['admin123'],
+          (err) => {
+            if (err) {
+              console.error('Error inserting default admin password:', err);
+            } else {
+              console.log('Default admin password set to: admin123');
+            }
+          }
+        );
+      }
+    });
+  });
 };
 
 // Initialize the database when this module is loaded

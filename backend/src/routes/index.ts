@@ -5,6 +5,7 @@ import { removeReservation } from "./remove_reservation";
 import { updateReservation } from "./update_reservation";
 import { getTables } from "./get_tables";
 import { saveTables } from "./save_tables";
+import { verifyPassword } from "./verify_password";
 
 const router = express.Router();
 
@@ -15,5 +16,7 @@ router.post("/reservations", updateReservation);
 
 router.get("/tables", getTables);
 router.post("/tables", saveTables);
+
+router.post("/verify-password", verifyPassword);
 
 export default router;

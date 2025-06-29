@@ -19,23 +19,44 @@ export const PasswordModal: React.FC<PasswordModalProps> = ({
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
-  // Default password - in production, this should be configurable
-  const ADMIN_PASSWORD = 'admin123';
+  const verifyPasswordWithDatabase = async (password: string): Promise<boolean> => {
+    try {
+      const response = await fetch("http://localhost:3000/api/v1/verify-password", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ password }),
+      });
+
+      const data = await response.json();
+      
+      if (response.ok && data.success) {
+        return true;
+      } else {
+        throw new Error(data.error || 'Invalid password');
+      }
+    } catch (err) {
+      console.error("Password verification error:", err);
+      throw err;
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
     setError('');
 
-    // Simulate a small delay for better UX
-    await new Promise(resolve => setTimeout(resolve, 500));
-
-    if (password === ADMIN_PASSWORD) {
-      onSuccess();
-      setPassword('');
-      setError('');
-    } else {
-      setError('Incorrect password. Please try again.');
+    try {
+      const isValid = await verifyPasswordWithDatabase(password);
+      
+      if (isValid) {
+        onSuccess();
+        setPassword('');
+        setError('');
+      }
+    } catch (err: any) {
+      setError(err.message || 'Password verification failed. Please try again.');
     }
     
     setIsLoading(false);
@@ -74,7 +95,7 @@ export const PasswordModal: React.FC<PasswordModalProps> = ({
           
           <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-4">
             <p className="text-xs text-blue-700">
-              <strong>Demo Password:</strong> admin123
+              <strong>Default Password:</strong> admin123 (stored in database)
             </p>
           </div>
         </div>
