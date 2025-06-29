@@ -1,4 +1,5 @@
 import { useState, useCallback, useEffect } from 'react';
+import { buildApiUrl, API_ENDPOINTS } from '../config/api';
 import type { Table } from '../../../shared/types';
 
 const initialTables: Table[] = [
@@ -32,7 +33,7 @@ export const useTables = () => {
   useEffect(() => {
     const fetchTables = async () => {
       try {
-        const response = await fetch("http://localhost:3000/api/v1/tables");
+        const response = await fetch(buildApiUrl(API_ENDPOINTS.TABLES));
         if (!response.ok) {
           throw new Error(`Failed to fetch: ${response.statusText}`);
         }
@@ -54,7 +55,7 @@ export const useTables = () => {
 
   const saveTablesEndpoint = async (tablesToSave: Table[]) => {
     try {
-      const response = await fetch("http://localhost:3000/api/v1/tables", {
+      const response = await fetch(buildApiUrl(API_ENDPOINTS.TABLES), {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

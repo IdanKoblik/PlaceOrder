@@ -1,4 +1,5 @@
 import { useState, useCallback, useMemo, useEffect } from 'react';
+import { buildApiUrl, API_ENDPOINTS } from '../config/api';
 import type { Reservation, Customer, Table } from '../../../shared/types';
 
 const mockReservations: Reservation[] = [
@@ -31,11 +32,10 @@ const mockReservations: Reservation[] = [
 export const useReservations = () => {
   const [reservations, setReservations] = useState<Reservation[]>([]);
 
-  //http://localhost:3000/api/v1/reservations
   useEffect(() => {
     const fetchReservations = async () => {
       try {
-        const res = await fetch("http://localhost:3000/api/v1/reservations", {
+        const res = await fetch(buildApiUrl(API_ENDPOINTS.RESERVATIONS), {
           method: "GET",
           headers: {
             "Content-Type": "application/json",
@@ -54,7 +54,7 @@ export const useReservations = () => {
 
   const createReservationEndpoint = async (reservation: Reservation) => {
     try {
-      const res = await fetch("http://localhost:3000/api/v1/reservations", {
+      const res = await fetch(buildApiUrl(API_ENDPOINTS.RESERVATIONS), {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
@@ -82,7 +82,7 @@ export const useReservations = () => {
 
   const updateReservationEndpoint = async (reservation: Reservation) => {
     try {
-      const res = await fetch("http://localhost:3000/api/v1/reservations", {
+      const res = await fetch(buildApiUrl(API_ENDPOINTS.RESERVATIONS), {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -111,7 +111,7 @@ export const useReservations = () => {
 
   const deleteReservationEndpoint = async (id: string) => {
     try {
-      const res = await fetch(`http://localhost:3000/api/v1/reservations?id=${id}`, {
+      const res = await fetch(`${buildApiUrl(API_ENDPOINTS.RESERVATIONS)}?id=${id}`, {
         method: "DELETE",
         headers: {
           "Content-Type": "application/json",

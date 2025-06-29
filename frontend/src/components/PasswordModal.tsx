@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Lock, X, Eye, EyeOff } from 'lucide-react';
+import { buildApiUrl, API_ENDPOINTS } from '../config/api';
 
 interface PasswordModalProps {
   isOpen: boolean;
@@ -21,7 +22,7 @@ export const PasswordModal: React.FC<PasswordModalProps> = ({
 
   const verifyPasswordWithDatabase = async (password: string): Promise<boolean> => {
     try {
-      const response = await fetch("http://localhost:3000/api/v1/verify-password", {
+      const response = await fetch(buildApiUrl(API_ENDPOINTS.VERIFY_PASSWORD), {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
