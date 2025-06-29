@@ -159,8 +159,9 @@ const initializeDatabase = () => {
             friday_is_open, friday_open_time, friday_close_time,
             saturday_is_open, saturday_open_time, saturday_close_time,
             sunday_is_open, sunday_open_time, sunday_close_time,
-            time_slot_duration, reservation_duration, advance_booking_days
-          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+            time_slot_duration, reservation_duration, advance_booking_days,
+            created_at, updated_at
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
           [
             'default',
             'ReserveFlow Restaurant',
@@ -171,7 +172,9 @@ const initializeDatabase = () => {
             1, '09:00', '23:00', // Friday
             1, '09:00', '23:00', // Saturday
             1, '10:00', '21:00', // Sunday
-            30, 120, 30 // time slot duration, reservation duration, advance booking days
+            30, 120, 30, // time slot duration, reservation duration, advance booking days
+            new Date().toISOString(), // created_at
+            new Date().toISOString()  // updated_at
           ],
           (err) => {
             if (err) {
