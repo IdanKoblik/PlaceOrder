@@ -1,7 +1,10 @@
 import React, { useState } from 'react';
 import { Calendar, Users, LayoutGrid, BarChart3, Plus, Settings } from 'lucide-react';
 import { LanguageProvider, useLanguage } from './contexts/LanguageContext';
+import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { LanguageSwitch } from './components/LanguageSwitch';
+import { UserProfile } from './components/UserProfile';
+import { AuthModal } from './components/AuthModal';
 import { PasswordModal } from './components/PasswordModal';
 import { Dashboard } from './components/Dashboard';
 import { ReservationList } from './components/ReservationList';
@@ -15,6 +18,7 @@ type ActiveView = 'dashboard' | 'reservations' | 'form' | 'tables';
 
 function AppContent() {
   const { t } = useLanguage();
+  const { isAuthenticated, checkAdminAccess } = useAuth();
   const { 
     reservations, 
     createReservation, 
@@ -26,6 +30,7 @@ function AppContent() {
 
   const [activeView, setActiveView] = useState<ActiveView>('dashboard');
   const [editingReservation, setEditingReservation] = useState<Reservation | undefined>();
+  const [showAuthModal, setShowAuthModal] = useState(false);
   const [showPasswordModal, setShowPasswordModal] = useState(false);
   const [isTableManagementUnlocked, setIsTableManagementUnlocked] = useState(false);
 
@@ -72,12 +77,36 @@ function AppContent() {
 
   const handleNavigationClick = (viewId: string) => {
     if (viewId === 'tables') {
+      // Check if user is authenticated first
+      if (!isAuthenticated) {
+        setShowAuthModal(true);
+        return;
+      }
+      
+      // If authenticated but not admin, show auth modal with admin requirement
+      if (!checkAdminAccess()) {
+        setShowAuthModal(true);
+        return;
+      }
+      
+      // If admin but table management not unlocked, show password modal
       if (!isTableManagementUnlocked) {
         setShowPasswordModal(true);
         return;
       }
     }
     setActiveView(viewId as ActiveView);
+  };
+
+  const handleAuthSuccess = () => {
+    setShowAuthModal(false);
+    
+    // After successful auth, check if we need password for table management
+    if (checkAdminAccess() && !isTableManagementUnlocked) {
+      setShowPasswordModal(true);
+    } else {
+      setActiveView('tables');
+    }
   };
 
   const handlePasswordSuccess = () => {
@@ -103,7 +132,7 @@ function AppContent() {
               <nav className="hidden md:flex space-x-8">
                 {navigation.map((item) => {
                   const Icon = item.icon;
-                  const isLocked = item.id === 'tables' && !isTableManagementUnlocked;
+                  const isLocked = item.id === 'tables' && (!isAuthenticated || !checkAdminAccess() || !isTableManagementUnlocked);
                   
                   return (
                     <button
@@ -139,6 +168,7 @@ function AppContent() {
                 </button>
               )}
               <LanguageSwitch />
+              <UserProfile />
             </div>
           </div>
         </div>
@@ -168,7 +198,7 @@ function AppContent() {
           />
         )}
 
-        {activeView === 'tables' && isTableManagementUnlocked && (
+        {activeView === 'tables' && isAuthenticated && checkAdminAccess() && isTableManagementUnlocked && (
           <TableManagement
             tables={tables}
             onUpdateTables={updateTables}
@@ -182,7 +212,7 @@ function AppContent() {
         <div className="grid grid-cols-3 gap-1">
           {navigation.map((item) => {
             const Icon = item.icon;
-            const isLocked = item.id === 'tables' && !isTableManagementUnlocked;
+            const isLocked = item.id === 'tables' && (!isAuthenticated || !checkAdminAccess() || !isTableManagementUnlocked);
             
             return (
               <button
@@ -205,6 +235,15 @@ function AppContent() {
         </div>
       </div>
 
+      {/* Auth Modal */}
+      <AuthModal
+        isOpen={showAuthModal}
+        onClose={() => setShowAuthModal(false)}
+        onSuccess={handleAuthSuccess}
+        title="Table Management Access"
+        requireAdmin={true}
+      />
+
       {/* Password Modal */}
       <PasswordModal
         isOpen={showPasswordModal}
@@ -218,9 +257,11 @@ function AppContent() {
 
 function App() {
   return (
-    <LanguageProvider>
-      <AppContent />
-    </LanguageProvider>
+    <AuthProvider>
+      <LanguageProvider>
+        <AppContent />
+      </LanguageProvider>
+    </AuthProvider>
   );
 }
 
