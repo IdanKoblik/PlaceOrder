@@ -31,11 +31,11 @@ const mockReservations: Reservation[] = [
 export const useReservations = () => {
   const [reservations, setReservations] = useState<Reservation[]>([]);
 
-  //http://0.0.0.0:3000/api/v1/reservations
+  //http://localhost:3000/api/v1/reservations
   useEffect(() => {
     const fetchReservations = async () => {
       try {
-        const res = await fetch("http://0.0.0.0:3000/api/v1/reservations", {
+        const res = await fetch("http://localhost:3000/api/v1/reservations", {
           method: "GET",
           headers: {
             "Content-Type": "application/json",
@@ -54,7 +54,7 @@ export const useReservations = () => {
 
   const createReservationEndpoint = async (reservation: Reservation) => {
     try {
-      const res = await fetch("http://0.0.0.0:3000/api/v1/reservations", {
+      const res = await fetch("http://localhost:3000/api/v1/reservations", {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
@@ -82,7 +82,7 @@ export const useReservations = () => {
 
   const updateReservationEndpoint = async (reservation: Reservation) => {
     try {
-      const res = await fetch("http://0.0.0.0:3000/api/v1/reservations", {
+      const res = await fetch("http://localhost:3000/api/v1/reservations", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -111,7 +111,7 @@ export const useReservations = () => {
 
   const deleteReservationEndpoint = async (id: string) => {
     try {
-      const res = await fetch(`http://0.0.0.0:3000/api/v1/reservations?id=${id}`, {
+      const res = await fetch(`http://localhost:3000/api/v1/reservations?id=${id}`, {
         method: "DELETE",
         headers: {
           "Content-Type": "application/json",
@@ -192,7 +192,7 @@ export const useReservations = () => {
 
   const getReservationsByDate = useCallback((date: string) => {
     return reservations.filter(reservation => reservation.date === date);
-  }, [reservations]);
+  }, []);
 
   return {
     reservations,
