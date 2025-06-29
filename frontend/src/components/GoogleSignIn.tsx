@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 
 interface GoogleSignInProps {
@@ -9,6 +9,8 @@ interface GoogleSignInProps {
 export const GoogleSignIn: React.FC<GoogleSignInProps> = ({ onSuccess, onError }) => {
   const { signInWithGoogle, isLoading } = useAuth();
   const buttonRef = useRef<HTMLDivElement>(null);
+  const [googleLoaded, setGoogleLoaded] = useState(false);
+  const [error, setError] = useState<string>('');
 
   useEffect(() => {
     // Load Google Sign-In script
@@ -16,7 +18,13 @@ export const GoogleSignIn: React.FC<GoogleSignInProps> = ({ onSuccess, onError }
     script.src = 'https://accounts.google.com/gsi/client';
     script.async = true;
     script.defer = true;
-    script.onload = initializeGoogleSignIn;
+    script.onload = () => {
+      setGoogleLoaded(true);
+      initializeGoogleSignIn();
+    };
+    script.onerror = () => {
+      setError('Failed to load Google Sign-In');
+    };
     document.head.appendChild(script);
 
     return () => {
@@ -33,24 +41,34 @@ export const GoogleSignIn: React.FC<GoogleSignInProps> = ({ onSuccess, onError }
 
     const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
     if (!clientId) {
-      console.error('Google Client ID not configured');
+      setError('Google Client ID not configured');
       return;
     }
 
-    window.google.accounts.id.initialize({
-      client_id: clientId,
-      callback: handleCredentialResponse,
-      auto_select: false,
-      cancel_on_tap_outside: true,
-    });
+    // Skip Google button rendering for demo mode
+    if (clientId === 'demo' || !clientId.includes('googleusercontent.com')) {
+      return;
+    }
 
-    window.google.accounts.id.renderButton(buttonRef.current, {
-      theme: 'outline',
-      size: 'large',
-      width: 280,
-      text: 'signin_with',
-      shape: 'rectangular',
-    });
+    try {
+      window.google.accounts.id.initialize({
+        client_id: clientId,
+        callback: handleCredentialResponse,
+        auto_select: false,
+        cancel_on_tap_outside: true,
+      });
+
+      window.google.accounts.id.renderButton(buttonRef.current, {
+        theme: 'outline',
+        size: 'large',
+        width: 280,
+        text: 'signin_with',
+        shape: 'rectangular',
+      });
+    } catch (err) {
+      console.error('Error initializing Google Sign-In:', err);
+      setError('Failed to initialize Google Sign-In');
+    }
   };
 
   const handleCredentialResponse = async (response: any) => {
@@ -58,9 +76,7 @@ export const GoogleSignIn: React.FC<GoogleSignInProps> = ({ onSuccess, onError }
       // Process the credential response
       const payload = JSON.parse(atob(response.credential.split('.')[1]));
       
-      // You can add additional validation here
       if (payload.email_verified) {
-        await signInWithGoogle();
         onSuccess?.();
       } else {
         throw new Error('Email not verified');
@@ -73,23 +89,47 @@ export const GoogleSignIn: React.FC<GoogleSignInProps> = ({ onSuccess, onError }
 
   const handleManualSignIn = async () => {
     try {
+      setError('');
       await signInWithGoogle();
       onSuccess?.();
     } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Sign-in failed';
+      setError(errorMessage);
       onError?.(error as Error);
     }
   };
 
+  const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
+  const isDemoMode = !clientId || clientId === 'demo' || !clientId.includes('googleusercontent.com');
+
   return (
     <div className="flex flex-col items-center space-y-4">
-      {/* Google Sign-In Button Container */}
-      <div ref={buttonRef} id="google-signin-button" />
+      {/* Error Display */}
+      {error && (
+        <div className="w-full p-3 bg-red-50 border border-red-200 rounded-lg">
+          <p className="text-sm text-red-700">{error}</p>
+        </div>
+      )}
+
+      {/* Demo Mode Notice */}
+      {isDemoMode && (
+        <div className="w-full p-3 bg-blue-50 border border-blue-200 rounded-lg">
+          <p className="text-sm text-blue-700">
+            <strong>Demo Mode:</strong> Google OAuth not configured. Click below to sign in as demo user.
+          </p>
+        </div>
+      )}
+
+      {/* Google Sign-In Button Container (only show if not demo mode and Google loaded) */}
+      {!isDemoMode && googleLoaded && (
+        <div ref={buttonRef} id="google-signin-button" />
+      )}
       
-      {/* Fallback Manual Button */}
+      {/* Manual/Demo Sign-In Button */}
       <button
         onClick={handleManualSignIn}
         disabled={isLoading}
-        className="flex items-center justify-center gap-3 px-6 py-3 bg-white border border-gray-300 rounded-lg shadow-sm hover:shadow-md transition-shadow disabled:opacity-50 disabled:cursor-not-allowed"
+        className="flex items-center justify-center gap-3 px-6 py-3 bg-white border border-gray-300 rounded-lg shadow-sm hover:shadow-md transition-shadow disabled:opacity-50 disabled:cursor-not-allowed w-full max-w-xs"
       >
         {isLoading ? (
           <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-blue-600"></div>
@@ -114,9 +154,21 @@ export const GoogleSignIn: React.FC<GoogleSignInProps> = ({ onSuccess, onError }
           </svg>
         )}
         <span className="text-gray-700 font-medium">
-          {isLoading ? 'Signing in...' : 'Sign in with Google'}
+          {isLoading ? 'Signing in...' : isDemoMode ? 'Sign in (Demo)' : 'Sign in with Google'}
         </span>
       </button>
+
+      {/* Configuration Help */}
+      {!isDemoMode && !googleLoaded && (
+        <div className="w-full p-3 bg-amber-50 border border-amber-200 rounded-lg">
+          <p className="text-sm text-amber-700">
+            <strong>Setup Required:</strong> Create a <code>.env</code> file with your Google Client ID:
+          </p>
+          <code className="block mt-1 text-xs bg-amber-100 p-1 rounded">
+            VITE_GOOGLE_CLIENT_ID=your-client-id.apps.googleusercontent.com
+          </code>
+        </div>
+      )}
     </div>
   );
 };

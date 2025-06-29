@@ -34,7 +34,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     const savedUser = localStorage.getItem('auth_user');
     if (savedUser) {
       try {
-        setUser(JSON.parse(savedUser));
+        const parsedUser = JSON.parse(savedUser);
+        setUser(parsedUser);
       } catch (error) {
         console.error('Error parsing saved user:', error);
         localStorage.removeItem('auth_user');
@@ -43,52 +44,21 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     setIsLoading(false);
   }, []);
 
-  const signInWithGoogle = async (): Promise<void> => {
+  const checkIfAdmin = (email: string): boolean => {
+    // Define admin emails - you can move this to environment variables
+    const adminEmails = [
+      'admin@yourrestaurant.com',
+      'manager@yourrestaurant.com',
+      // Add more admin emails as needed
+    ];
+    
+    return adminEmails.includes(email.toLowerCase());
+  };
+
+  const handleGoogleResponse = (response: any) => {
     try {
       setIsLoading(true);
       
-      // Initialize Google Sign-In
-      if (!window.google) {
-        throw new Error('Google Sign-In library not loaded');
-      }
-
-      const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
-      if (!clientId) {
-        throw new Error('Google Client ID not configured');
-      }
-
-      // Initialize Google Identity Services
-      window.google.accounts.id.initialize({
-        client_id: clientId,
-        callback: handleGoogleResponse,
-        auto_select: false,
-        cancel_on_tap_outside: true,
-      });
-
-      // Prompt the user to sign in
-      window.google.accounts.id.prompt((notification: any) => {
-        if (notification.isNotDisplayed() || notification.isSkippedMoment()) {
-          // Fallback to popup if prompt is not displayed
-          window.google.accounts.id.renderButton(
-            document.getElementById('google-signin-button'),
-            {
-              theme: 'outline',
-              size: 'large',
-              width: 250,
-            }
-          );
-        }
-      });
-
-    } catch (error) {
-      console.error('Google Sign-In error:', error);
-      setIsLoading(false);
-      throw error;
-    }
-  };
-
-  const handleGoogleResponse = async (response: any) => {
-    try {
       // Decode the JWT token to get user information
       const payload = JSON.parse(atob(response.credential.split('.')[1]));
       
@@ -102,22 +72,66 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
       setUser(userData);
       localStorage.setItem('auth_user', JSON.stringify(userData));
-      setIsLoading(false);
+      console.log('User signed in successfully:', userData);
     } catch (error) {
       console.error('Error processing Google response:', error);
+    } finally {
       setIsLoading(false);
     }
   };
 
-  const checkIfAdmin = (email: string): boolean => {
-    // Define admin emails - you can move this to environment variables
-    const adminEmails = [
-      'admin@yourrestaurant.com',
-      'manager@yourrestaurant.com',
-      // Add more admin emails as needed
-    ];
-    
-    return adminEmails.includes(email.toLowerCase());
+  const signInWithGoogle = async (): Promise<void> => {
+    try {
+      setIsLoading(true);
+      
+      const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
+      if (!clientId) {
+        throw new Error('Google Client ID not configured. Please set VITE_GOOGLE_CLIENT_ID in your .env file');
+      }
+
+      // For development/testing, create a mock user
+      if (clientId === 'demo' || !clientId.includes('googleusercontent.com')) {
+        console.log('Using demo authentication');
+        const demoUser: User = {
+          id: 'demo-user',
+          email: 'demo@restaurant.com',
+          name: 'Demo User',
+          picture: undefined,
+          isAdmin: true,
+        };
+        
+        setUser(demoUser);
+        localStorage.setItem('auth_user', JSON.stringify(demoUser));
+        setIsLoading(false);
+        return;
+      }
+
+      // Check if Google library is loaded
+      if (!window.google) {
+        throw new Error('Google Sign-In library not loaded');
+      }
+
+      // Initialize Google Identity Services
+      window.google.accounts.id.initialize({
+        client_id: clientId,
+        callback: handleGoogleResponse,
+        auto_select: false,
+        cancel_on_tap_outside: true,
+      });
+
+      // Try to prompt for sign-in
+      window.google.accounts.id.prompt((notification: any) => {
+        if (notification.isNotDisplayed() || notification.isSkippedMoment()) {
+          console.log('Google prompt not displayed, user needs to click sign-in button');
+        }
+        setIsLoading(false);
+      });
+
+    } catch (error) {
+      console.error('Google Sign-In error:', error);
+      setIsLoading(false);
+      throw error;
+    }
   };
 
   const signOut = () => {
