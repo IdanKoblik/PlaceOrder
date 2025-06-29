@@ -1,5 +1,5 @@
 import React, { useState, useRef, useCallback } from 'react';
-import { Plus, Edit, Trash2, Save, X, Move, Settings } from 'lucide-react';
+import { Plus, Edit, Trash2, Save, X, Move, Settings, Download } from 'lucide-react';
 import { useLanguage } from '../contexts/LanguageContext';
 import type { Table } from '../../../shared/types';
 
@@ -50,6 +50,53 @@ export const TableManagement: React.FC<TableManagementProps> = ({
       default:
         return 'w-12 h-12 rounded-lg';
     }
+  };
+
+  const handleExportTables = () => {
+    // Convert tables to SQLite INSERT statements
+    const sqlStatements = tables.map(table => {
+      return `INSERT INTO tables (id, name, area, min_capacity, max_capacity, is_adjustable, position_x, position_y, is_active) VALUES ('${table.id}', '${table.name}', '${table.area}', ${table.capacity.min}, ${table.capacity.max}, ${table.isAdjustable ? 1 : 0}, ${table.position.x}, ${table.position.y}, ${table.isActive ? 1 : 0});`;
+    });
+
+    const sqlContent = `-- Table data export
+-- Generated on ${new Date().toISOString()}
+
+CREATE TABLE IF NOT EXISTS tables (
+  id TEXT PRIMARY KEY,
+  name TEXT NOT NULL,
+  area TEXT NOT NULL,
+  min_capacity INTEGER NOT NULL,
+  max_capacity INTEGER NOT NULL,
+  is_adjustable INTEGER NOT NULL DEFAULT 1,
+  position_x INTEGER NOT NULL,
+  position_y INTEGER NOT NULL,
+  is_active INTEGER NOT NULL DEFAULT 1
+);
+
+${sqlStatements.join('\n')}`;
+
+    // Create and download the file
+    const blob = new Blob([sqlContent], { type: 'text/sql' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `tables-export-${new Date().toISOString().split('T')[0]}.sql`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+
+    // Also export as JSON for backup
+    const jsonContent = JSON.stringify(tables, null, 2);
+    const jsonBlob = new Blob([jsonContent], { type: 'application/json' });
+    const jsonUrl = URL.createObjectURL(jsonBlob);
+    const jsonA = document.createElement('a');
+    jsonA.href = jsonUrl;
+    jsonA.download = `tables-export-${new Date().toISOString().split('T')[0]}.json`;
+    document.body.appendChild(jsonA);
+    jsonA.click();
+    document.body.removeChild(jsonA);
+    URL.revokeObjectURL(jsonUrl);
   };
 
   const handleMouseDown = useCallback((e: React.MouseEvent, tableId: string) => {
@@ -142,13 +189,22 @@ export const TableManagement: React.FC<TableManagementProps> = ({
       {/* Header */}
       <div className="flex items-center justify-between">
         <h2 className="text-2xl font-bold text-gray-800">Table Management</h2>
-        <button
-          onClick={() => setIsAddingTable(true)}
-          className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-        >
-          <Plus size={16} />
-          Add Table
-        </button>
+        <div className="flex items-center gap-3">
+          <button
+            onClick={handleExportTables}
+            className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+          >
+            <Download size={16} />
+            Export Tables
+          </button>
+          <button
+            onClick={() => setIsAddingTable(true)}
+            className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+          >
+            <Plus size={16} />
+            Add Table
+          </button>
+        </div>
       </div>
 
       {/* Area Selection */}

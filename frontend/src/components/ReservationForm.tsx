@@ -53,12 +53,13 @@ export const ReservationForm: React.FC<ReservationFormProps> = ({
       formData.date,
       formData.startTime,
       endTime,
-      formData.partySize
+      formData.partySize,
+      tables // Pass tables array here
     );
     setAvailableTables(available);
     
     setSelectedTables(prev => prev.filter(id => available.some(table => table.id === id)));
-  }, [formData.date, formData.startTime, formData.partySize, getAvailableTables, endTime]);
+  }, [formData.date, formData.startTime, formData.partySize, getAvailableTables, endTime, tables]);
 
   const handleInputChange = (field: string, value: any) => {
     if (field.startsWith('customer.')) {
